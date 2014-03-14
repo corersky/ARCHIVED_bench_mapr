@@ -5,7 +5,9 @@ count_words.py
 Count words from a .txt file. Output to .csv.
 
 Example usage:
-$ ddfs chunk data:inputtxt ./input.txt
+Assuming input.txt is a 5G files and you have 5 slave nodes:
+$ split --line-bytes=1G input.txt
+$ ddfs push data:inputtxt ./xa?
 $ python count_words.py data:inputtxt output.csv
 
 Adapted from disco/examples/utils/count_words.py, wordcount.py, simple_innerjoin.py
@@ -51,4 +53,4 @@ if __name__ == '__main__':
     with open(output_filename, 'w') as fp:
         writer = csv.writer(fp)
         for word, count in result_iterator(job.wait(show=True)):
-            writer.writerow([word] + count)
+            writer.writerow([word, count])
