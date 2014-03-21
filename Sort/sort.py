@@ -16,6 +16,7 @@ TODO: Add help text.
 import sys
 import base64
 import string
+from disco.ddfs import DDFS
 from disco.core import Job, result_iterator
 from disco.test import TestCase, TestJob
 from disco.util import kvgroup, shuffled
@@ -45,19 +46,30 @@ class SortJob(TestJob):
 
 if __name__ == '__main__':
     
-    # TODO: allow runningn without arguments
+    # TODO: allow running without arguments
     if len(sys.argv) != 3:
-        print "ERROR: Wrong number of arguments."
-        print "  Example useage:"
-        print "  Assuming input.txt is a 5G file and you have 5 slave nodes:"
-        print "  $ split --line-bytes=1G input.txt"
-        print "  $ ddfs push data:inputtxt ./xa?"
-        print "  $ python sort.py data:inputtxt ouput.txt"
-        sys.exit()
-    else:
-        #TODO: check input is tag
-        input_tag = sys.argv[1]
-        output_filename = sys.argv[2]
+        sys.stderr.write(
+            """ERROR: Wrong number of arguments.
+  Example usage:
+  Assuming input.txt is a 5G file and you have 5 slave nodes:
+  $ split --line-bytes=1G input.txt"
+  $ ddfs push data:inputtxt ./xa?"
+  $ python sort.py data:inputtxt ouput.txt
+""")
+        sys.exit(1)
+
+    input_tag = sys.argv[1]
+    output_filename = sys.argv[2]
+    if not DDFS().exists(input_tag):
+        sys.stderr.write(
+            "ERROR: " + input_tag + """ is not a tag in Disco Distributed File System.
+  Example usage:
+  Assuming input.txt is a 5G file and you have 5 slave nodes:
+  $ split --line-bytes=1G input.txt"
+  $ ddfs push data:inputtxt ./xa?"
+  $ python sort.py data:inputtxt ouput.txt
+""")
+        sys.exit(1)
     
     # Necesary to import since slave nodes do not have
     # same namespace as master.
