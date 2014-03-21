@@ -46,7 +46,6 @@ class SortJob(TestJob):
 
 if __name__ == '__main__':
     
-    # TODO: allow running without arguments
     if len(sys.argv) != 3:
         sys.stderr.write(
             """ERROR: Wrong number of arguments.

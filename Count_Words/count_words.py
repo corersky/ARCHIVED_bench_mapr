@@ -38,19 +38,29 @@ class CountWords(Job):
 
 if __name__ == '__main__':
 
-    # # TODO: allow running without argucments
     if len(sys.argv) != 3:
-        print "ERROR: Wrong number of arguments."
-        print "  Example usage:"
-        print "  Assuming input.txt is a 5G file and you have 5 slave nodes:"
-        print "  $ split --line-bytes=1G input.txt"
-        print "  $ ddfs push data:inputtxt ./xa?"
-        print "  $ python count_words.py data:inputtxt output.csv"
-        sys.exit()
-    else:
-        # TODO: check input is tag
-        input_tag = sys.argv[1]
-        output_filename = sys.argv[2]
+        sys.stderr.write(
+            """ERROR: Wrong number of arguments.
+  Example usage:
+  Assuming input.txt is a 5G file and you have 5 slave nodes:
+  $ split --line-bytes=1G input.txt"
+  $ ddfs push data:inputtxt ./xa?"
+  $ python count_words.py data:inputtxt ouput.txt
+""")
+        sys.exit(1)
+
+    input_tag = sys.argv[1]
+    output_filename = sys.argv[2]
+    if not DDFS().exists(input_tag):
+        sys.stderr.write(
+            "ERROR: " + input_tag + """ is not a tag in Disco Distributed File System.
+  Example usage:
+  Assuming input.txt is a 5G file and you have 5 slave nodes:
+  $ split --line-bytes=1G input.txt"
+  $ ddfs push data:inputtxt ./xa?"
+  $ python count_words.py data:inputtxt ouput.txt
+""")
+        sys.exit(1)
 
     # Necessary to import since slave nodes do not have
     # same namespace as master.
