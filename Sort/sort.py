@@ -24,6 +24,7 @@ import csv
 from disco.ddfs import DDFS
 from disco.core import Job, result_iterator
 from disco.util import kvgroup, shuffled
+from disco.compat import bytes_to_str, str_to_bytes
 
 class Sort(Job):
     # 5 partitions for 5 slave nodes: scout02-06
@@ -31,13 +32,13 @@ class Sort(Job):
     sort = True
 
     def map(self, string, params):
-        bytestring = base64.encodestring(string)
+        bytestring = base64.encodestring(str_to_bytes(string))
         bytevalue = b''
         yield shuffled((bytestring, bytevalue))
     
     def reduce(self, rows_iter, out, params):
         for bytestring, bytevalue in kvgroup(rows_iter):
-            string = base64.decodestring(bytestring)
+            string = bytes_to_str(base64.decodestring(bytestring))
             count = len(list(bytevalue))
             out.add(string, count)
 
