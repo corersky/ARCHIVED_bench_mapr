@@ -10,8 +10,9 @@ $ split --line-bytes=1G input.txt
 $ ddfs push data:inputtxt ./xa?
 $ python count_words.py data:inputtxt output.csv
 
-Adapted from disco/examples/utils/count_words.py, wordcount.py, simple_innerjoin.py
-and http://disco.readthedocs.org/en/latest/start/tutorial_2.html
+Adapted from
+disco/examples/utils/count_words.py, wordcount.py, simple_innerjoin.py
+http://disco.readthedocs.org/en/latest/start/tutorial_2.html
 
 TODO:
 Add help text.
@@ -37,14 +38,14 @@ class CountWords(Job):
 
 if __name__ == '__main__':
 
-    # # TODO: allow running witout argucments
+    # # TODO: allow running without argucments
     if len(sys.argv) != 3:
         print "ERROR: Wrong number of arguments."
-        print "Example usage:"
-        print "Assuming input.txt is a 5G files and you have 5 slave nodes:"
-        print "$ split --line-bytes=1G input.txt"
-        print "$ ddfs push data:inputtxt ./xa?"
-        print "$ python count_words.py data:inputtxt output.csv"
+        print "  Example usage:"
+        print "  Assuming input.txt is a 5G file and you have 5 slave nodes:"
+        print "  $ split --line-bytes=1G input.txt"
+        print "  $ ddfs push data:inputtxt ./xa?"
+        print "  $ python count_words.py data:inputtxt output.csv"
         sys.exit()
     else:
         # TODO: check input is tag

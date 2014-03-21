@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+"""
+sort.py
+
+Sort a .txt file. Ouput .txt.
+
+TODO: Example usage
+
+Adapted from
+disco/tests/test_sort.py
+disco/tests/test_pipeline_sort.py
+
+TODO: Add help text.
+"""
+
+import base64
+import string
+from disco.test import TestCase, TestJob
+from disco.util import kvgroup, shuffled
+from disco.compat import bytes_to_str, str_to_bytes
+
+alphanum = list(string.ascii_letters) + list(map(str, range(10)))
+print alphanum
