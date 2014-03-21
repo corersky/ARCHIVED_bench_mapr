@@ -16,6 +16,7 @@ http://disco.readthedocs.org/en/latest/start/tutorial_2.html
 
 TODO:
 Add help text.
+Automatically determine partitions from config file and automatically chunk data
 """
 
 import sys
