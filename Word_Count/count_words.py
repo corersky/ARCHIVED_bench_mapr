@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 """
 count_words.py
 
@@ -32,25 +32,31 @@ class CountWords(Job):
             yield word, 1
 
     def reduce(self, rows_iter, out, params):
-        # Is sorted necessary if sort = True?
-        # for word, count in kvgroup(sorted(rows_iter)):
         for word, count in kvgroup(rows_iter):
             out.add(word, sum(count))
 
 if __name__ == '__main__':
-    input_filename = "input.txt"
-    output_filename = "output.csv"
-    if len(sys.argv) > 1:
-        input_filename = sys.argv[1]
-        if len(sys.argv) > 2:
-            output_filename = sys.argv[2]
 
-    # Necessary to import since slave noes do not have
+    # # TODO: allow running witout argucments
+    if len(sys.argv) != 3:
+        print "ERROR: Wrong number of arguments."
+        print "Example usage:"
+        print "Assuming input.txt is a 5G files and you have 5 slave nodes:"
+        print "$ split --line-bytes=1G input.txt"
+        print "$ ddfs push data:inputtxt ./xa?"
+        print "$ python count_words.py data:inputtxt output.csv"
+        sys.exit()
+    else:
+        # TODO: check input is tag
+        input_tag = sys.argv[1]
+        output_filename = sys.argv[2]
+
+    # Necessary to import since slave nodes do not have
     # same namespace as master.
     from count_words import CountWords
-    job = CountWords().run(input=[input_filename])
+    job = CountWords().run(input=[input_tag])
 
     with open(output_filename, 'w') as fp:
-        writer = csv.writer(fp)
+        writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
         for word, count in result_iterator(job.wait(show=True)):
             writer.writerow([word, count])
