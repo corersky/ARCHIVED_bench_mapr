@@ -33,7 +33,7 @@ class Sort(Job):
     def map(self, string, params):
         bytestring = base64.encodestring(string)
         bytevalue = b''
-        yield shuffled(bytesstring, bytevalue)
+        yield shuffled((bytestring, bytevalue))
     
     def reduce(self, rows_iter, out, params):
         for bytestring, bytevalue in kvgroup(rows_iter):
@@ -75,4 +75,4 @@ if __name__ == '__main__':
     with open(output_filename, 'w') as fp:
         writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
         for string, count in result_iterator(job.wait(show=True)):
-            writer.writewrow([string, count])
+            writer.writerow([string, count])
