@@ -23,19 +23,19 @@ from disco.core import Job, result_iterator
 from disco.util import kvgroup, shuffled
 from disco.compat import bytes_to_str, str_to_bytes
 
-# alphanum = list(string.ascii_letters) + list(map(str, range(10)))
-
 class Sort(Job):
     # 5 partitions for 5 slave nodes: scout02-06
     partitions = 5
     sort = True
 
     def map(self, string, params):
+        print "TRACE: in map"
         print string
-        print shuffled((base64.encodestring(str_to_bytes(c)), b'') for c in bytes_to_str(string * 10))
-        yield shuffled((base64.encodestring(str_to_bytes(c)), b'') for c in bytes_to_str(string * 10))
+        print shuffled((base64.encodestring(str_to_bytes(c)), b'') for c in bytes_to_str(string))
+        yield shuffled((base64.encodestring(str_to_bytes(c)), b'') for c in bytes_to_str(string))
     
     def reduce(self, rows_iter, out, params):
+        print "TRACE in reduce"
         print rows_iter
         for k, vs in kvgroup(rows_iter):
             print k, vs
