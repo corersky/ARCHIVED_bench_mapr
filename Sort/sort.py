@@ -21,8 +21,7 @@ from disco.test import TestCase, TestJob
 from disco.util import kvgroup, shuffled
 from disco.compat import bytes_to_str, str_to_bytes
 
-alphanum = list(string.ascii_letters) + list(map(str, range(10)))
-print alphanum
+# alphanum = list(string.ascii_letters) + list(map(str, range(10)))
 
 class SortJob(TestJob):
     sort = True
@@ -54,6 +53,7 @@ if __name__ == '__main__':
         print "  $ split --line-bytes=1G input.txt"
         print "  $ ddfs push data:inputtxt ./xa?"
         print "  $ python sort.py data:inputtxt ouput.txt"
+        sys.exit()
     else:
         #TODO: check input is tag
         input_tag = sys.argv[1]
