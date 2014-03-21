@@ -21,6 +21,7 @@ Automatically determine partitions from config file and automatically chunk data
 
 import sys
 import csv
+from disco.ddfs import DDFS
 from disco.core import Job, result_iterator
 from disco.util import kvgroup
 
