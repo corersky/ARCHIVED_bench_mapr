@@ -13,6 +13,7 @@ $ python sort.py data:inputtxt output.csv
 Adapted from
 disco/tests/test_sort.py, test_pipeline_sort.py
 disco/examples/utils/count_words.py, wordcount.py, simple_innerjoin.py
+http://disco.readthedocs.org/en/0.4.4/howto/dataflow.html
 
 TODO:
 - Add help text.
