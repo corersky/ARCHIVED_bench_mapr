@@ -19,9 +19,6 @@ TODO:
 - Add help text.
 - Automatically determine partitions from config file and automatically chunk data
 - Can't get sorted across nodes.
-- Implement pipeline. From test__pipeline_sort.py,
-  'from disco.worker.pipeline.worker import Stage'
-  doesn't work since disco.worker.pipeline doesn't exist.
 """
 
 import sys
@@ -34,6 +31,7 @@ from disco.compat import bytes_to_str, str_to_bytes
 class Sort(Job):
     # 5 partitions for 5 slave nodes: scout02-06
     partitions = 5
+    merge_partitions = True
     sort = True
 
     def map(self, string, params):
