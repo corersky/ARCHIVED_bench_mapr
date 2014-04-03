@@ -16,6 +16,9 @@ disco/examples/utils/count_words.py, wordcount.py, simple_innerjoin.py
 http://disco.readthedocs.org/en/0.4.4/howto/dataflow.html
 
 TODO:
+- implement chunk internally, don't use partitions
+- move sort to reduce
+- Use argument parser
 - Add help text.
 - Automatically determine partitions from config file and automatically chunk data
 - Can't get sorted across nodes.
@@ -29,10 +32,10 @@ from disco.util import kvgroup, shuffled
 from disco.compat import bytes_to_str, str_to_bytes
 
 class Sort(Job):
-    # 5 partitions for 5 slave nodes: scout02-06
-    partitions = 5
-    merge_partitions = True
-    sort = True
+    # TODO: Partition automatically. Use this partition for small files.
+    # partitions = 5
+    # merge_partitions = True
+    # sort = True
 
     def map(self, string, params):
         bytestring = base64.encodestring(str_to_bytes(string))
@@ -40,7 +43,7 @@ class Sort(Job):
         yield shuffled((bytestring, bytevalue))
     
     def reduce(self, rows_iter, out, params):
-        for bytestring, bytevalue in kvgroup(rows_iter):
+        for bytestring, bytevalue in kvgroup(sorted(rows_iter)):
             string = bytes_to_str(base64.decodestring(bytestring))
             count = len(list(bytevalue))
             out.add(string, count)
