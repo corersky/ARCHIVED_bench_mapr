@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 """
-sort.py
-
 Sort a file and tally sorted lines. Output .csv.
-
 """
 
 import argparse
@@ -28,7 +25,7 @@ def main(file_in="input.txt", file_out="output.csv"):
 
     try:
         # Import since slave nodes do not have same namespace as master
-        from sort import Sort
+        from sort_map_reduce import Sort
         # TODO: disco is reading its chunked data as binary
         # how follow http://disco.readthedocs.org/en/latest/howto/chunk.html ?
         job = Sort().run(input=[tag], map_reader=chain_reader)
