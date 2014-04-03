@@ -32,7 +32,6 @@ from disco.util import kvgroup, shuffled
 from disco.compat import bytes_to_str, str_to_bytes
 
 class Sort(Job):
-    # 5 partitions for 5 slave nodes: scout02-06
     # TODO: Partition automatically. Use this partition for small files.
     # partitions = 5
     # merge_partitions = True
