@@ -12,9 +12,8 @@ import csv
 def main(file_in, file_out):
     with open(file_in, 'r') as f_in:
         lines = [line for line in f_in]
-    lines.sort()
     counts = map(lines.count, lines)
-    tallies = set(zip(lines, counts))
+    tallies = sorted(list(set(zip(lines, counts))))
     with open(file_out, 'w') as f_out:
         writer = csv.writer(f_out, quoting=csv.QUOTE_NONNUMERIC)
         for (line, count) in tallies:
