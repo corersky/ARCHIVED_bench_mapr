@@ -11,7 +11,7 @@ import csv
 from disco.ddfs import DDFS
 from disco.core import Job, result_iterator
 from disco.util import kvgroup
-from disco.worker.task_io import chain_reader
+from disco.func import chain_reader
 
 def main(file_in="input.txt", file_out="output.csv"):
     # with open(file_in, 'r') as f_in:
@@ -31,7 +31,7 @@ def main(file_in="input.txt", file_out="output.csv"):
         from sort import Sort
         # TODO: disco is reading its chunked data as binary
         # how follow http://disco.readthedocs.org/en/latest/howto/chunk.html ?
-        job = Sort().run(map_reader=chain_reader, input=[tag])
+        job = Sort().run(input=[tag], map_reader=chain_reader)
         with open(file_out, 'w') as f_out:
             writer = csv.writer(f_out, quoting=csv.QUOTE_NONNUMERIC)
             for string, count in result_iterator(job.wait(show=True)):
