@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """
 Sort a file and tally sorted lines. Output .csv.
+
+TODO:
+- check ddfs tag exists
+- check disco v0.4.4
 """
 
 import argparse
@@ -12,6 +16,9 @@ from disco.func import chain_reader
 
 def main(file_in="input.txt", file_out="output.csv"):
 
+    # TODO: Rename tag data:sort1 if tag exists.
+    # Disco v0.4.4 requires that ./ prefix the file to identify as local file.
+    # http://disco.readthedocs.org/en/0.4.4/howto/chunk.html#chunking
     tag = "data:sort"
     DDFS().chunk(tag=tag, urls=["./"+file_in])
 
