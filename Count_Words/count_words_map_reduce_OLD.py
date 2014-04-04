@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 """
-count_words.py
-
 Count words from a .txt file. Output to .csv.
 
 Example usage:
