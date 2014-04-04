@@ -1,14 +1,27 @@
 #!/usr/bin/env python
 """
 Do k-means clustering without map-reduce.
-See https://groups.google.com/forum/#!topic/disco-dev/u3EsnGgLOPM
+Adapted from http://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_iris.html
 """
 
 import argparse
 import csv
+import numpy as np
+import pylab as pl
+from sklearn.cluster import KMeans
+from sklearn import datasets
 
 def main(file_in="input.txt", file_out="output.csv"):
-    pass
+    np.random.seed(5)
+    iris = datasets.load_iris()
+    X = iris.data
+    y = iris.target
+    init = "todo"
+    est = KMeans(n_clusters=3)
+    print est.fit(X)
+    print est.labels_
+    print y
+    return None
 
 if __name__ == '__main__':
     
