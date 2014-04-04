@@ -11,14 +11,6 @@ from disco.util import kvgroup
 from disco.func import chain_reader
 
 def main(file_in="input.txt", file_out="output.csv"):
-    # with open(file_in, 'r') as f_in:
-    #     lines = [line for line in f_in]
-    # counts = map(lines.count, lines)
-    # tallies = sorted(list(set(zip(lines, counts))))
-    # with open(file_out, 'w') as f_out:
-    #     writer = csv.writer(f_out, quoting=csv.QUOTE_NONNUMERIC)
-    #     for (line, count) in tallies:
-    #         writer. writerow([line, count])
 
     tag = "data:sort"
     DDFS().chunk(tag=tag, urls=["./"+file_in])
@@ -26,8 +18,6 @@ def main(file_in="input.txt", file_out="output.csv"):
     try:
         # Import since slave nodes do not have same namespace as master
         from sort_map_reduce import Sort
-        # TODO: disco is reading its chunked data as binary
-        # how follow http://disco.readthedocs.org/en/latest/howto/chunk.html ?
         job = Sort().run(input=[tag], map_reader=chain_reader)
         with open(file_out, 'w') as f_out:
             writer = csv.writer(f_out, quoting=csv.QUOTE_NONNUMERIC)
