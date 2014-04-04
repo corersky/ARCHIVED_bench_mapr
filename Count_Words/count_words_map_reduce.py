@@ -2,72 +2,54 @@
 """
 Count words from a .txt file. Output to .csv.
 
-Example usage:
-Assuming input.txt is a 5G files and you have 5 slave nodes:
-$ split --line-bytes=1G input.txt
-$ ddfs push data:inputtxt ./xa?
-$ python count_words.py data:inputtxt output.csv
-
-Adapted from
-disco/examples/utils/count_words.py, wordcount.py, simple_innerjoin.py
-http://disco.readthedocs.org/en/latest/start/tutorial_2.html
-
 TODO:
-Add help text.
-Automatically determine partitions from config file and automatically chunk data
+- check ddfs tag exists
+- check disco v0.4.4
 """
 
-import sys
+import argparse
 import csv
 from disco.ddfs import DDFS
 from disco.core import Job, result_iterator
 from disco.util import kvgroup
+from disco.func import chain_reader
+
+def main(file_in="input.txt", file_out="output.csv"):
+
+    # TODO: Rename tag data:count_words1 if tag exists.
+    # Disco v0.4.4 requrires that ./ prefix the file to identify as a local file.
+    # http://disco.readthedocs.org/en/0.4.4/howto/chunk.html#chunking
+    tag = "data:count_words"
+    DDFS().chunk(tag=tag, urls=["./"+file_in])
+    try:
+        # Import since slave nodes do not have same namespace as master.
+        from count_words_map_reduce import CountWords
+        job = CountWords().run(input=[tag], map_reader=chain_reader)
+        with open(file_out, 'w') as f_out:
+            writer = csv.writer(f_out, quoting=csv.QUOTE_NONNUMERIC)
+            for word, count in result_iterator(job.wait(show=True)):
+                writer.writerow([word, count])
+    finally:
+        DDFS().delete(tag=tag)
+    return None
 
 class CountWords(Job):
-    # 5 partitions for 5 slave nodes: scout02-06
-    partitions = 5
-    sort = True
 
     def map(self, line, params):
         for word in line.split():
             yield word, 1
 
     def reduce(self, rows_iter, out, params):
-        for word, count in kvgroup(rows_iter):
+        for word, count in kvgroup(sorted(rows_iter)):
             out.add(word, sum(count))
+        return None
 
 if __name__ == '__main__':
 
-    if len(sys.argv) != 3:
-        sys.stderr.write(
-            """ERROR: Wrong number of arguments.
-  Example usage:
-  Assuming input.txt is a 5G file and you have 5 slave nodes:
-  $ split --line-bytes=1G input.txt"
-  $ ddfs push data:inputtxt ./xa?"
-  $ python count_words.py data:inputtxt ouput.txt
-""")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Count words in a file with map-reduce.")
+    parser.add_argument("--file_in", default="input.txt", help="Input file. Default: input.txt")
+    parser.add_argument("--file_out", default="output.csv", help="Output file. Default: output.csv")
+    args = parser.parse_args()
+    print args
 
-    input_tag = sys.argv[1]
-    output_filename = sys.argv[2]
-    if not DDFS().exists(input_tag):
-        sys.stderr.write(
-            "ERROR: " + input_tag + """ is not a tag in Disco Distributed File System.
-  Example usage:
-  Assuming input.txt is a 5G file and you have 5 slave nodes:
-  $ split --line-bytes=1G input.txt"
-  $ ddfs push data:inputtxt ./xa?"
-  $ python count_words.py data:inputtxt ouput.txt
-""")
-        sys.exit(1)
-
-    # Necessary to import since slave nodes do not have
-    # same namespace as master.
-    from count_words import CountWords
-    job = CountWords().run(input=[input_tag])
-
-    with open(output_filename, 'w') as fp:
-        writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
-        for word, count in result_iterator(job.wait(show=True)):
-            writer.writerow([word, count])
+    main(file_in=args.file_in, file_out=args.file_out)
