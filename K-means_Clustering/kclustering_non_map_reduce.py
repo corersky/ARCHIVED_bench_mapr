@@ -14,7 +14,7 @@ def main(file_in="iris.csv", file_out="centers.csv", n_clusters=3):
     estimator = KMeans(n_clusters=n_clusters)
     print estimator
     estimator.fit(data)
-    centers = est.cluster_centers_
+    centers = estimator.cluster_centers_
     np.savetxt(file_out, centers, delimiter=",")
     return None
 
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description="Do k-means clustering on file without map-reduce.")
     parser.add_argument("--file_in", default="iris.csv", help="Input file. Default: iris.csv")
-    parser.add_argument("--file_out", default="cluster_centers.csv", help="Output file. Default: cluster_centers.csv")
+    parser.add_argument("--file_out", default="centers.csv", help="Output file. Default: centers.csv")
     parser.add_argument("--n_clusters", default=3, type=int, help="Number of clusters. Default: 3")
     args = parser.parse_args()
     print args
