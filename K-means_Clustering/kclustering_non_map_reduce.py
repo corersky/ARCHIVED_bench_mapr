@@ -10,15 +10,12 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 def main(file_in="iris.csv", file_out="centers.csv", n_clusters=3):
-    #TODO: Rexume here
-    iris = datasets.load_iris()
-    X = iris.data
-    est = KMeans(n_clusters=3)
-    print est
-    est.fit(X)
+    data = np.genfromtxt(file_in, delimiter=",")
+    estimator = KMeans(n_clusters=n_clusters)
+    print estimator
+    estimator.fit(data)
     centers = est.cluster_centers_
-    print centers
-    np.savetxt("output.csv", centers, delimiter=",")
+    np.savetxt(file_out, centers, delimiter=",")
     return None
 
 if __name__ == '__main__':
