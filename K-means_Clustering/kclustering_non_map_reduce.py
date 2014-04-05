@@ -7,25 +7,23 @@ Adapted from http://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_i
 import argparse
 import csv
 import numpy as np
-import pylab as pl
 from sklearn.cluster import KMeans
 from sklearn import datasets
 
 def main(file_in="input.txt", file_out="output.csv"):
-    np.random.seed(5)
     iris = datasets.load_iris()
     X = iris.data
-    y = iris.target
-    init = "todo"
     est = KMeans(n_clusters=3)
-    print est.fit(X)
-    print est.labels_
-    print y
+    print est
+    est.fit(X)
+    centers = est.cluster_centers_
+    print centers
+    np.savetxt("output.csv", centers, delimiter=",")
     return None
 
 if __name__ == '__main__':
     
-    parser = argparse.ArgumentParser(description="Do k-means clustering from a file without map-reduce.")
+    parser = argparse.ArgumentParser(description="Do k-means clustering on file without map-reduce.")
     parser.add_argument("--file_in", default="input.txt", help="Input file. Default: input.txt")
     parser.add_argument("--file_out", default="output.csv", help="Output file. Default: output.csv")
     args = parser.parse_args()
