@@ -5,12 +5,12 @@ Adapted from http://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_i
 """
 
 import argparse
-import csv
+import os
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn import datasets
 
-def main(file_in="input.txt", file_out="output.csv"):
+def main(file_in="iris.csv", file_out="centers.csv", n_clusters=3):
+    #TODO: Rexume here
     iris = datasets.load_iris()
     X = iris.data
     est = KMeans(n_clusters=3)
@@ -24,9 +24,13 @@ def main(file_in="input.txt", file_out="output.csv"):
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description="Do k-means clustering on file without map-reduce.")
-    parser.add_argument("--file_in", default="input.txt", help="Input file. Default: input.txt")
-    parser.add_argument("--file_out", default="output.csv", help="Output file. Default: output.csv")
+    parser.add_argument("--file_in", default="iris.csv", help="Input file. Default: iris.csv")
+    parser.add_argument("--file_out", default="cluster_centers.csv", help="Output file. Default: cluster_centers.csv")
+    parser.add_argument("--n_clusters", default=3, type=int, help="Number of clusters. Default: 3")
     args = parser.parse_args()
     print args
 
-    main(file_in=args.file_in, file_out=args.file_out)
+    if not os.path.isfile(args.file_in):
+        create_iris_csv
+
+    main(file_in=args.file_in, file_out=args.file_out, n_clusters=args.n_clusters)
