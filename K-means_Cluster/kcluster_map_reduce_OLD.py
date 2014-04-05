@@ -1,51 +1,26 @@
+#!/usr/bin/env python
 """
-K-clustering with MapReduce
-===========================
-The input of this job should be something like this:
+Do k-means clustering in a simplistic way.
+See https://groups.google.com/forum/#!topic/disco-dev/u3EsnGgLOPM
 
-$ cat input
-1 1 4
-2 1 3
-3 2 3
-4 6 1
-5 7 1
-6 7 2
+Adapted from
+disco/examples/datamining/kclustering.py
 
-Where the first column is the id of the point and the remaining columns are
-the values of the point in d dimensions (So we have d+1 columns for a
-d-dimensional space). These dimensions should be separated with only
-whitespaces, if the input is in another format, you have to change the reader
-function to parse the input lines and yield a key-value pair containing the
-point-id as the key and the rest as the value, like:
-    (id, [x, y, z, ...])
-
-If we want to use ddfs for the input dataset, we should first chunk the data
-into ddfs under a tag name:
-
-$ ddfs chunk cluster ./input
-
-and then we can use the tag as the input to the job:
-
-$ python kclustering.py --clusters 2 --iterations 3  'tag://cluster'
-
-And it finds the two clusters for these points:
-    ('1', (0.55555555555555536, 0))
-    ('2', (0.22222222222222227, 0))
-    ('3', (0.5555555555555558, 0))
-    ('4', (0.55555555555555591, 1))
-    ('5', (0.22222222222222199, 1))
-    ('6', (0.55555555555555547, 1))
-
-The first item in the value is the euclidean distance between the node and the
-average and the second item is the cluster id.
+TODO:
+- check ddfs tag exists
+- check disco v0.4.4
 """
 
-from disco.core import Disco, Params, result_iterator
+import argparse
+import os
+import numpy as np
+import csv
+from disco.ddfs import DDFS
+from disco.core import Job, result_iterator
+from disco.util import kvgroup
 from disco.func import chain_reader
-from optparse import OptionParser
-from os import getenv
 
-
+# Comment from kclustering_original.py
 # HACK: The following dictionary will be transformed into a class once
 # class support in Params has been added to Disco.
 mean_point_center = {
@@ -55,6 +30,27 @@ mean_point_center = {
     'dist':(lambda p,x: sum((pxi-xi)**2 for pxi,xi in zip(p['x'],x)) )
     }
 
+def main(file_in="iris.csv", file_out="centers.csv", n_clusters=3):
+    data = np.genfromtxt(file_in, delimiter=",")
+    # TODO: Rename tag data:sort1 if tag exists.
+    # Disco v0.4.4 requires that ./ prefix the file to identify as local file.
+    # http://disco.readthedocs.org/en/0.4.4/howto/chunk.html#chunking
+    tag = "data:kcluster"
+    DDFS().chunk(tag=tag, urls=["./"+file_in])
+    try:
+        # Import since slave nodes do not have same namespace as master
+        from kcluster_map_reduce import KCluster
+        job = KCluster().run(input=[tag], map_reader=chain_reader)
+        with open(file_out, 'w') as f_out:
+            writer = csv.writer(f_out, quoting=csv.QUOTE_NONNUMERIC)
+            for (id, center) in result_iterator(job.wait(show=True)):
+                writer.writerow([id, center])
+    finally:
+        DDFS().delete(tag=tag)
+    return None
+
+class KCluster(Job):
+    pass
 
 def map_init(iter, params):
     """Intialize random number generator with given seed `params.seed`."""
@@ -72,7 +68,6 @@ def estimate_combiner(i, c, centers, done, params):
     """Aggregate the datapoints in each cluster."""
     if done:
         return centers.iteritems()
-
     centers[i] = c if i not in centers else params.update(centers[i], c)
 
 def estimate_reduce(iter, out, params):
@@ -80,7 +75,6 @@ def estimate_reduce(iter, out, params):
     centers = {}
     for i, c in iter:
         centers[i] = c if i not in centers else params.update(centers[i], c)
-
     for i, c in centers.iteritems():
         out.add(i, params.finalize(c))
 
@@ -100,13 +94,10 @@ def estimate(master, input, center, k, iterations, map_reader = chain_reader):
                          map = random_init_map,
                          combiner = estimate_combiner,
                          reduce = estimate_reduce,
-                         params = Params(k = k, seed = None,
-                                         **center),
+                         params = Params(k = k, seed = None, **center),
                          nr_reduces = k)
-
     centers = [(i,c) for i,c in result_iterator(job.wait())]
     job.purge()
-
     for  j in range(iterations):
         job = master.new_job(name = 'k-clustering_iteration_%s' %(j,),
                              input = input,
@@ -114,13 +105,10 @@ def estimate(master, input, center, k, iterations, map_reader = chain_reader):
                              map = estimate_map,
                              combiner = estimate_combiner,
                              reduce = estimate_reduce,
-                             params = Params(centers = centers,
-                                             **center),
+                             params = Params(centers = centers, **center),
                              nr_reduces = k)
-
         centers = [(i,c) for i,c in result_iterator(job.wait())]
         job.purge()
-
     return centers
 
 
@@ -132,31 +120,19 @@ def predict(master, input, center, centers, map_reader = chain_reader):
                          input = input,
                          map_reader = map_reader,
                          map = predict_map,
-                         params = Params(centers = centers,
-                                         **center),
+                         params = Params(centers = centers, **center),
                          nr_reduces = 0)
-
     return job.wait()
 
-
 if __name__ == '__main__':
-    parser = OptionParser(usage='%prog [options] inputs')
-    parser.add_option('--disco-master',
-                      default=getenv('DISCO_MASTER'),
-                      help='Disco master')
-    parser.add_option('--iterations',
-                      default=10,
-                      help='Numbers of iteration')
-    parser.add_option('--clusters',
-                      default=10,
-                      help='Numbers of clusters')
-
-    (options, input) = parser.parse_args()
-    master = Disco(options.disco_master)
-
-    centers = estimate(master, input, mean_point_center,
-                       int(options.clusters), int(options.iterations))
-
-    res = predict(master, input, mean_point_center, centers)
-
-    print '\n'.join(res)
+    parser = argparse.ArgumentParser(description="Do K-means clustering with map reduce.")
+    parser.add_argument("--file_in", default="iris.csv", help="Input file. Default: iris.csv")
+    parser.add_argument("--file_out", default="centers.csv", help="Output file. Default: centers.csv")
+    parser.add_argument("--n_clusters", default=3, type=int, help="Number of clusters. Default: 3")
+    args = parser.parse_args()
+    print args
+    if not os.path.isfile(args.file_in):
+        print "INFO: {file_in} does not exist.".format(file_in=args.file_in)
+        print "Creating iris.csv"
+        crate_iris_csv
+    main(file_in=args.file_in, file_out=args.file_out, n_clusters=args.n_clusters)
