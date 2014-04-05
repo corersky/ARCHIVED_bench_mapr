@@ -1,37 +1,51 @@
-#!/usr/bin/env python
 """
-kclustering.py
+K-clustering with MapReduce
+===========================
+The input of this job should be something like this:
 
-Do k-means clustering in a simplistic way.
-See https://groups.google.com/forum/#!topic/disco-dev/u3EsnGgLOPM
+$ cat input
+1 1 4
+2 1 3
+3 2 3
+4 6 1
+5 7 1
+6 7 2
 
-TODO: update below
-Example usage:
-Assuming input.txt is a 5G file and you have 5 slave nodes:
-$ split --line-bytes=1G input.txt"
-$ ddfs push data:inputtxt ./xa?"
-$ python sort.py data:inputtxt output.csv
+Where the first column is the id of the point and the remaining columns are
+the values of the point in d dimensions (So we have d+1 columns for a
+d-dimensional space). These dimensions should be separated with only
+whitespaces, if the input is in another format, you have to change the reader
+function to parse the input lines and yield a key-value pair containing the
+point-id as the key and the rest as the value, like:
+    (id, [x, y, z, ...])
 
-Adapted from
-disco/examples/datamining/kclustering.py
-disco/examples/utils/count_words.py, wordcount.py, simple_innerjoin.py
-http://disco.readthedocs.org/en/0.4.4/howto/dataflow.html
+If we want to use ddfs for the input dataset, we should first chunk the data
+into ddfs under a tag name:
 
-TODO:
-- Add help text.
-- Automatically determine partitions from config file and automatically chunk data
-- Can't get sorted across nodes.
+$ ddfs chunk cluster ./input
+
+and then we can use the tag as the input to the job:
+
+$ python kclustering.py --clusters 2 --iterations 3  'tag://cluster'
+
+And it finds the two clusters for these points:
+    ('1', (0.55555555555555536, 0))
+    ('2', (0.22222222222222227, 0))
+    ('3', (0.5555555555555558, 0))
+    ('4', (0.55555555555555591, 1))
+    ('5', (0.22222222222222199, 1))
+    ('6', (0.55555555555555547, 1))
+
+The first item in the value is the euclidean distance between the node and the
+average and the second item is the cluster id.
 """
 
-import sys
-import csv
 from disco.core import Disco, Params, result_iterator
 from disco.func import chain_reader
 from optparse import OptionParser
 from os import getenv
 
 
-# Comment from kclustering_original.py
 # HACK: The following dictionary will be transformed into a class once
 # class support in Params has been added to Disco.
 mean_point_center = {
@@ -40,6 +54,7 @@ mean_point_center = {
     'finalize':(lambda p: { 'x':[v/p['w'] for v in p['_x']],'_x':p['_x'], 'w':p['w'] }),
     'dist':(lambda p,x: sum((pxi-xi)**2 for pxi,xi in zip(p['x'],x)) )
     }
+
 
 def map_init(iter, params):
     """Intialize random number generator with given seed `params.seed`."""
@@ -145,101 +160,3 @@ if __name__ == '__main__':
     res = predict(master, input, mean_point_center, centers)
 
     print '\n'.join(res)
-
-if __name__ == '__main__':
-    
-    if len(sys.argv) != 3:
-        sys.stderr.write(
-            """ERROR: Wrong number of arguments.
-  Example usage:
-  Assuming input.txt is a 5G file and you have 5 slave nodes:
-  $ split --line-bytes=1G input.txt"
-  $ ddfs push data:inputtxt ./xa?"
-  $ python kclustering.py data:inputtxt output.csv
-""")
-        sys.exit(1)
-
-    input_tag = sys.argv[1]
-    output_filename = sys.argv[2]
-    if not DDFS().exists(input_tag):
-        sys.stderr.write(
-            "ERROR: " + input_tag + """ is not a tag in Disco Distributed File System.
-  Example usage:
-  Assuming input.txt is a 5G file and you have 5 slave nodes:
-  $ split --line-bytes=1G input.txt"
-  $ ddfs push data:inputtxt ./xa?"
-  $ python kclustering.py data:inputtxt output.csv
-""")
-        sys.exit(1)
-    
-    # Necesary to import since slave nodes do not have
-    # same namespace as master.
-    from kclustering import Kclustering
-    job = Kclustering().run(input=[input_tag])
-
-    with open(output_filename, 'w') as fp:
-        writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
-        for element, cluster_id in result_iterator(job.wait(show=True)):
-            writer.writerow([element, cluster_id])
-
-# OLD below
-
-import sys
-import csv
-from disco.ddfs import DDFS
-from disco.core import Job, result_iterator
-from disco.util import kvgroup, shuffled
-from disco.compat import bytes_to_str, str_to_bytes
-
-class Sort(Job):
-    # 5 partitions for 5 slave nodes: scout02-06
-    partitions = 5
-    merge_partitions = True
-    sort = True
-
-    def map(self, string, params):
-        bytestring = base64.encodestring(str_to_bytes(string))
-        bytevalue = b''
-        yield shuffled((bytestring, bytevalue))
-    
-    def reduce(self, rows_iter, out, params):
-        for bytestring, bytevalue in kvgroup(rows_iter):
-            string = bytes_to_str(base64.decodestring(bytestring))
-            count = len(list(bytevalue))
-            out.add(string, count)
-
-if __name__ == '__main__':
-    
-    if len(sys.argv) != 3:
-        sys.stderr.write(
-            """ERROR: Wrong number of arguments.
-  Example usage:
-  Assuming input.txt is a 5G file and you have 5 slave nodes:
-  $ split --line-bytes=1G input.txt"
-  $ ddfs push data:inputtxt ./xa?"
-  $ python sort.py data:inputtxt output.csv
-""")
-        sys.exit(1)
-
-    input_tag = sys.argv[1]
-    output_filename = sys.argv[2]
-    if not DDFS().exists(input_tag):
-        sys.stderr.write(
-            "ERROR: " + input_tag + """ is not a tag in Disco Distributed File System.
-  Example usage:
-  Assuming input.txt is a 5G file and you have 5 slave nodes:
-  $ split --line-bytes=1G input.txt"
-  $ ddfs push data:inputtxt ./xa?"
-  $ python sort.py data:inputtxt output.csv
-""")
-        sys.exit(1)
-    
-    # Necesary to import since slave nodes do not have
-    # same namespace as master.
-    from sort import Sort
-    job = Sort().run(input=[input_tag])
-    
-    with open(output_filename, 'w') as fp:
-        writer = csv.writer(fp, quoting=csv.QUOTE_NONNUMERIC)
-        for string, count in result_iterator(job.wait(show=True)):
-            writer.writerow([string, count])
