@@ -4,7 +4,7 @@ Download bz2 files from list and upload to Disco Distributed File System.
 """
 
 import argparse
-import wget
+import urllib2
 
 def main(file_in="bz2_url_list.txt"):
     with open(file_in, 'r') as f_in:
@@ -12,8 +12,8 @@ def main(file_in="bz2_url_list.txt"):
             # Skip commented lines.
             if url.startswith('#'):
                 continue
-            bz2_file = url.strip()
-            wget(bz2_file)
+            url = urllib.urlopen(url.strip())
+            print bz2_f
             
     return None
 

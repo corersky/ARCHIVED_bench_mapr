@@ -20,7 +20,7 @@ def main(file_in="iris.csv", file_out="centers.csv", n_clusters=3):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Do k-means clustering on file without map-reduce.")
-    parser.add_argument("--file_in", default="iris.csv", help="Input data in CSV format. Default: iris.csv")
+    parser.add_argument("--file_in", default="iris.csv", help="Input file in CSV format. Default: iris.csv")
     parser.add_argument("--file_out", default="centers.csv", help="Output file. Default: centers.csv")
     parser.add_argument("--n_clusters", default=3, type=int, help="Number of clusters. Default: 3")
     args = parser.parse_args()
