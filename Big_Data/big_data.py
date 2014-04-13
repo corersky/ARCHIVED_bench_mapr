@@ -54,6 +54,11 @@ def main(file_in="bz2_url_list.txt"):
     Download bz2 files from list and upload to Disco Distributed File System.
     """
     with open(file_in, 'r') as f_in:
+        # If Disco tag exists, delete it.
+        tag="data:big"
+        if DDFS().exists(tag=tag):
+            print "Deleting Disco tag {tag}.".format(tag=tag)
+            DDFS().delete(tag=tag)
         for line in f_in:
             # Skip commented lines.
             if line.startswith('#'):
@@ -61,15 +66,16 @@ def main(file_in="bz2_url_list.txt"):
             # Remove newlines and name file from URL.
             url = line.strip()
             file_bz2 = os.path.basename(url)
+            # Download bz2 file.
             download(url=url, file_out=file_bz2)
+            # Decompress bz2 file.
             file_decom = os.path.splitext(file_bz2)[0]
             decompress(file_bz2=file_bz2, file_out=file_decom)
-            # Load data to Disco Distributed File System.
-            # If tag exists, delete it.
-            tag="data:big"
-            if DDFS().exists(tag=tag):
-                DDFS().delete(tag=tag)
+            # Load data into Disco Distributed File System.
+            print "Loading into Disco: {file_decom}.".format(file_decom=file_decom)
             DDFS().chunk(tag=tag, urls=['./'+file_decom])
+            # Delete bz2 and decompressed files.
+            print "Deleting:\n{file_bz2}\n{file_decom}".format(file_bz2=file_bz2, file_decom=file_decom)
             os.remove(file_bz2)
             os.remove(file_decom)
     return None
