@@ -27,9 +27,9 @@ def download(url, file_out="download.out"):
         f_url = urllib2.urlopen(url)
         with open(file_out, 'wb') as f_out:
             f_out.write(f_url.read())
-    except HTTPError, e:
+    except urllib2.HTTPError, e:
         print "HTTP Error:", e.code, url
-    except URLError, e:
+    except urllib2.URLError, e:
         print "URL Error:", e.reason, url
     return None
 
@@ -45,10 +45,11 @@ def decompress(file_bz2, file_out="decompress.out"):
     with bz2.BZ2File(file_bz2, 'rb') as f_bz2:
         with open(file_out, 'wb') as f_out:
             f_out.write(f_bz2.read())
+    # TODO: delete following if above works
     #    subprocess.call(['bzip2', '-dk', file_bz2])
     return None
 
-def main(file_in="bz2_url_list.txt"):
+def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
     """
     Download bz2 files from list and upload to Disco Distributed File System.
     """
@@ -64,7 +65,7 @@ def main(file_in="bz2_url_list.txt"):
                 continue
             # Remove newlines and name file from URL.
             url = line.strip()
-            file_bz2 = '/tmp/'+os.path.basename(url)
+            file_bz2 = os.path.join(tmp, os.path.basename(url))
             # Download bz2 file.
             download(url=url, file_out=file_bz2)
             # Decompress bz2 file.
@@ -84,6 +85,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Download bz2 files from list and upload to Disco Distributed File System.")
     parser.add_argument("--file_in", default="bz2_url_list.txt", 
                         help="Input file list of URLs to bz2 files for download. Default: bz2_url_list.txt")
+    parser.add_argument("--tmp", default="/scratch/sth499",
+                        help="Path where to temporarily save bz2 files for extraction and loading.")
     args = parser.parse_args()
     print args
-    main(file_in=args.file_in)
+    main(file_in=args.file_in, tmp=args.tmp)
