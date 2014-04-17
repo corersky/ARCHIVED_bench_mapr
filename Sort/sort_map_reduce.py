@@ -19,7 +19,7 @@ def main(file_in="input.txt", file_out="output.csv"):
     # Disco v0.4.4 requires that ./ prefix the file to identify as local file.
     # http://disco.readthedocs.org/en/0.4.4/howto/chunk.html#chunking
     tag = "data:sort"
-    DDFS().chunk(tag=tag, urls=["./"+file_in])
+    DDFS().chunk(tag=tag, urls=['./'+file_in])
     try:
         # Import since slave nodes do not have same namespace as master
         from sort_map_reduce import Sort
