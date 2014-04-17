@@ -42,12 +42,10 @@ def decompress(file_bz2, file_out="decompress.out"):
         print file_bz2
         raise NameError("File extension not '.bz2'.")
     print "Decompressing\n{file_bz2}\nto\n{file_out}".format(file_bz2=file_bz2, file_out=file_out)
-    # TODO: Resolve errors:
-    # ValueError: the bz2 library has received wrong parameters
-    # with bz2.BZ2File(file_bz2, 'rb') as f_bz2:
-    #     with open(file_out, 'wb') as f_out:
-    #         f_out.write(f_bz2.read())
-    subprocess.call(['bzip2', '-dk', file_bz2])
+    with bz2.BZ2File(file_bz2, 'rb') as f_bz2:
+        with open(file_out, 'wb') as f_out:
+            f_out.write(f_bz2.read())
+    #    subprocess.call(['bzip2', '-dk', file_bz2])
     return None
 
 def main(file_in="bz2_url_list.txt"):
