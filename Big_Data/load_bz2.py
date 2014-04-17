@@ -14,7 +14,6 @@ import argparse
 import urllib2
 import os
 import bz2
-import subprocess
 from disco.ddfs import DDFS
 
 def download(url, file_out="download.out"):
@@ -43,12 +42,11 @@ def decompress(file_bz2, file_out="decompress.out"):
         print file_bz2
         raise NameError("File extension not '.bz2'.")
     print "Decompressing\n{file_bz2}\nto\n{file_out}".format(file_bz2=file_bz2, file_out=file_out)
+    # From http://stackoverflow.com/questions/16963352/decompress-bz2-files
     with open(file_out, 'wb') as f_out:
         with bz2.BZ2File(file_bz2, 'rb') as f_bz2:
             for data in iter(lambda : f_bz2.read(100*1024), b''):
                 f_out.write(data)
-    # TODO: delete following if above works
-    #    subprocess.call(['bzip2', '-dk', file_bz2])
     return None
 
 def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
@@ -75,8 +73,8 @@ def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
             decompress(file_bz2=file_bz2, file_out=file_decom)
             # Load data into Disco Distributed File System.
             # Files must be prefixed with './'
-            print "Loading into Disco: {file_decom}.".format(file_decom=file_decom)
-            DDFS().chunk(tag=tag, urls=['./'+file_decom])
+            print "Loading into Disco:\n{file_decom}".format(file_decom=file_decom)
+            DDFS().chunk(tag=tag, urls=[os.path.join('./',file_decom)])
             # Delete bz2 and decompressed files.
             print "Deleting:\n{file_bz2}\n{file_decom}".format(file_bz2=file_bz2, file_decom=file_decom)
             os.remove(file_bz2)
