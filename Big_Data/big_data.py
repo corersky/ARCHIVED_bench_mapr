@@ -23,7 +23,7 @@ def download(url, file_out="download.out"):
     # From http://stackoverflow.com/questions/4028697
     # /how-do-i-download-a-zip-file-in-python-using-urllib2
     try:
-        print "Downloading {url}".format(url=url)
+        print "Downloading\n{url}\nto\n{file_out}".format(url=url, file_out=file_out)
         f_url = urllib2.urlopen(url)
         with open(file_out, 'wb') as f_out:
             f_out.write(f_url.read())
@@ -39,8 +39,9 @@ def decompress(file_bz2, file_out="decompress.out"):
     """
     (base, ext) = os.path.splitext(file_bz2)
     if ext != '.bz2':
+        print file_bz2
         raise NameError("File extension not '.bz2'.")
-    print "Decompressing {file_bz2}.".format(file_bz2=file_bz2)
+    print "Decompressing\n{file_bz2}\nto\n{file_out}".format(file_bz2=file_bz2, file_out=file_out)
     # TODO: Resolve errors:
     # ValueError: the bz2 library has received wrong parameters
     # with bz2.BZ2File(file_bz2, 'rb') as f_bz2:
@@ -65,13 +66,14 @@ def main(file_in="bz2_url_list.txt"):
                 continue
             # Remove newlines and name file from URL.
             url = line.strip()
-            file_bz2 = os.path.basename(url)
+            file_bz2 = '/tmp/'+os.path.basename(url)
             # Download bz2 file.
             download(url=url, file_out=file_bz2)
             # Decompress bz2 file.
             file_decom = os.path.splitext(file_bz2)[0]
             decompress(file_bz2=file_bz2, file_out=file_decom)
             # Load data into Disco Distributed File System.
+            # Files must be prefixed with './'
             print "Loading into Disco: {file_decom}.".format(file_decom=file_decom)
             DDFS().chunk(tag=tag, urls=['./'+file_decom])
             # Delete bz2 and decompressed files.
