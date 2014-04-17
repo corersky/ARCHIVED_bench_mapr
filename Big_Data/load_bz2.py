@@ -13,6 +13,7 @@ TODO:
 import argparse
 import urllib2
 import os
+import bz2
 import subprocess
 from disco.ddfs import DDFS
 
@@ -42,9 +43,10 @@ def decompress(file_bz2, file_out="decompress.out"):
         print file_bz2
         raise NameError("File extension not '.bz2'.")
     print "Decompressing\n{file_bz2}\nto\n{file_out}".format(file_bz2=file_bz2, file_out=file_out)
-    with bz2.BZ2File(file_bz2, 'rb') as f_bz2:
-        with open(file_out, 'wb') as f_out:
-            f_out.write(f_bz2.read())
+    with open(file_out, 'wb') as f_out:
+        with bz2.BZ2File(file_bz2, 'rb') as f_bz2:
+            for data in iter(lambda : f_bz2.read(100*1024), b''):
+                f_out.write(data)
     # TODO: delete following if above works
     #    subprocess.call(['bzip2', '-dk', file_bz2])
     return None
