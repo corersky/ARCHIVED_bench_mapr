@@ -12,34 +12,35 @@
 # uncompressed: ~400 GB
 # over 16 nodes: ~30 GB/node
 http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000000010p000003356.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000003357p000005489.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000005490p000008311.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000008313p000010000.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000010001p000012804.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000012806p000015046.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000015047p000016307.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000016308p000018080.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000018081p000019635.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000019636p000021362.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000021363p000023221.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000023222p000025000.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000025001p000027150.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000027152p000030058.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000030059p000032587.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000032589p000036647.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000036648p000040297.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000040298p000046025.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000046026p000052547.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000052548p000055000.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000055002p000060857.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000060858p000067554.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000067556p000075321.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000075322p000087410.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000087411p000102923.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000102924p000104998.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000105001p000136380.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000136381p000150090.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000150091p000162494.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000162495p000173486.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000173487p000184999.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history6.xml-p000185003p000198687.bz2
+# CONTINUE WITH UPLOAD FROM HERE
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000003357p000005489.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000005490p000008311.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000008313p000010000.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000010001p000012804.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000012806p000015046.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000015047p000016307.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000016308p000018080.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000018081p000019635.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000019636p000021362.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000021363p000023221.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000023222p000025000.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000025001p000027150.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000027152p000030058.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000030059p000032587.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000032589p000036647.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000036648p000040297.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000040298p000046025.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000046026p000052547.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000052548p000055000.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000055002p000060857.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000060858p000067554.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000067556p000075321.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000075322p000087410.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000087411p000102923.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history4.xml-p000102924p000104998.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000105001p000136380.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000136381p000150090.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000150091p000162494.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000162495p000173486.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history5.xml-p000173487p000184999.bz2
+# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history6.xml-p000185003p000198687.bz2
