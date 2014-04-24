@@ -15,6 +15,7 @@ import argparse
 import urllib2
 import os
 import bz2
+import sys
 from disco.ddfs import DDFS
 
 def download(url, file_out="download.out"):
@@ -34,9 +35,12 @@ def download(url, file_out="download.out"):
         print("URL Error:", e.reason, url)
     return None
 
-def decompress(file_bz2, file_out="decompress.out"):
+def decompress_and_partition(file_bz2, file_out="decompress.out"):
     """
-    Decompress bz2 files.
+    Decompress bz2 files and partition with newlines every 100 KB.
+    Due to a bug in disco v0.4.4 for uploading, pushing a long record as a blob corrupts the existing tag.
+    Chunk does not work on records over 1MB.
+    See: https://groups.google.com/forum/#!searchin/disco-dev/push$20chunk/disco-dev/i9LiNiLEQ7k/95fX2sC-dtQJ
     """
     (base, ext) = os.path.splitext(file_bz2)
     if ext != '.bz2':
@@ -48,19 +52,7 @@ def decompress(file_bz2, file_out="decompress.out"):
     with open(file_out, 'wb') as f_out, bz2.BZ2File(file_bz2, 'rb') as f_bz2:
         for data in iter(lambda : f_bz2.read(100*1024), b''):
             f_out.write(data)
-    return None
-
-def insert_newlines(file_in):
-    """
-    Preprocess decompressed file by inserting newlines every 0.5MB to create new records.
-    Due to a bug in disco v0.4.4 for uploading, pushing a long record as a blob corrupts the existing tag.
-    Chunk does not work on records over 1MB.
-    See: https://groups.google.com/forum/#!searchin/disco-dev/push$20chunk/disco-dev/i9LiNiLEQ7k/95fX2sC-dtQJ
-    """
-    with open(file_in, 'w+') as f_in:
-        f_in.seek(0)
-        for chunk in iter(lambda : f_in.seek(500*1024, 1), ''):
-            f_in.write("\n")
+            f_out.write("\n")
     return None
 
 def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
@@ -84,46 +76,22 @@ def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
             # Remove newlines and name file from URL.
             url = line.strip()
             file_bz2 = os.path.join(tmp, os.path.basename(url))
-
+            # TEST
+            file_bz2 = '/home/sth499/2014-03-07_test_disco/Disco_Benchmark/Big_Data/longest_line.txt.bz2'
             # Download bz2 file.
             # TEST
             # download(url=url, file_out=file_bz2)
 
-            # Decompress bz2 file.
+            # Decompress and partition bz2 file.
             file_decom = os.path.splitext(file_bz2)[0]
-            # TEST
-            file_decom = '/scratch/sth499/longest_line.txt'
-            # TEST
-            # decompress(file_bz2=file_bz2, file_out=file_decom)
-
-            # Preprocess big data by inserting newlines.
-            # See docstring for insert_newlines.
-            print("Inserting newlines into\n{file_in}".format(file_in=file_decom))
-            insert_newlines(file_in=file_decom)
+            decompress(file_bz2=file_bz2, file_out=file_decom)
 
             # Load data into Disco Distributed File System.
-            print("Loading into Disco:\n{file_decom}".format(file_decom=file_decom))
-
-            # find lines longer than 1MB
-            # TEST
-            file_temp = file_decom + '_temp'
-            with open(file_decom, 'r') as f_decom:
-                # TEST
-                # Load one record at a time since chunk has a 1MB limit for a single record.
-                for line_num, line in enumerate(f_decom):
-                    print(line_num, end=' ')
-                    # Overwrite the temp file for every line in decompressed file.
-                    with open(file_temp, 'w') as f_temp:
-                        f_temp.write(line)
-                    try:
-                        DDFS().chunk(tag=tag, urls=[os.path.join('./', file_temp)])
-                    # If a record exceeds the 1MB limit, push the record as a single blob.
-                    # See: https://groups.google.com/forum/#!searchin/
-                    # disco-dev/push$20chunk/disco-dev/i9LiNiLEQ7k/95fX2sC-dtQJ
-                    except ValueError:
-                        print("ValueError", end=' ')
-                        DDFS().push(tag=tag, files=[file_temp])
-                else: print() # make newline
+            print("Loading into Disco:\n{file_in}".format(file_in=file_decom))
+            try:
+                DDFS().chunk(tag=tag, urls=[os.path.join('./', file_decom)])
+            except ValueError:
+                print("ValueError:\n{file_decom}".format(file_decom=file_decom), file=sys.stderr)
             # Delete bz2 and decompressed files.
             # TEST
             # print("Deleting:\n{file_bz2}\n{file_decom}".format(file_bz2=file_bz2, file_decom=file_decom))
