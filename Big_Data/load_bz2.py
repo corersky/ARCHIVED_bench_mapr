@@ -46,13 +46,15 @@ def decompress_and_partition(file_bz2, file_out="decompress.out"):
     if ext != '.bz2':
         print(file_bz2)
         raise NameError("File extension not '.bz2'.")
-    print("Decompressing\n{file_bz2}\nto\n{file_out}".format(file_bz2=file_bz2, file_out=file_out))
+    print(
+        "Decompressing and partitioning\n"
+        +"{file_bz2}\nto\n{file_out}".format(file_bz2=file_bz2, file_out=file_out))
     # From http://stackoverflow.com/questions/16963352/decompress-bz2-files
     # and http://bob.ippoli.to/archives/2005/06/14/python-iterators-and-sentinel-values/
     with open(file_out, 'wb') as f_out, bz2.BZ2File(file_bz2, 'rb') as f_bz2:
         for data in iter(lambda : f_bz2.read(100*1024), b''):
             f_out.write(data)
-            f_out.write("\n")
+            f_out.write(b"\n")
     return None
 
 def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
@@ -76,15 +78,12 @@ def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
             # Remove newlines and name file from URL.
             url = line.strip()
             file_bz2 = os.path.join(tmp, os.path.basename(url))
-            # TEST
-            file_bz2 = '/home/sth499/2014-03-07_test_disco/Disco_Benchmark/Big_Data/longest_line.txt.bz2'
             # Download bz2 file.
-            # TEST
-            # download(url=url, file_out=file_bz2)
+            download(url=url, file_out=file_bz2)
 
             # Decompress and partition bz2 file.
             file_decom = os.path.splitext(file_bz2)[0]
-            decompress(file_bz2=file_bz2, file_out=file_decom)
+            decompress_and_partition(file_bz2=file_bz2, file_out=file_decom)
 
             # Load data into Disco Distributed File System.
             print("Loading into Disco:\n{file_in}".format(file_in=file_decom))
@@ -93,10 +92,9 @@ def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
             except ValueError:
                 print("ValueError:\n{file_decom}".format(file_decom=file_decom), file=sys.stderr)
             # Delete bz2 and decompressed files.
-            # TEST
-            # print("Deleting:\n{file_bz2}\n{file_decom}".format(file_bz2=file_bz2, file_decom=file_decom))
-            # os.remove(file_bz2)
-            # os.remove(file_decom)
+            print("Deleting:\n{file_bz2}\n{file_decom}".format(file_bz2=file_bz2, file_decom=file_decom))
+            os.remove(file_bz2)
+            os.remove(file_decom)
     return None
 
 if __name__ == '__main__':
