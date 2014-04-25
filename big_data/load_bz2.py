@@ -3,7 +3,6 @@
 Download bz2 files from list and upload to Disco Distributed File System.
 
 TODO:
-- check ddfs tag exists
 - check disco v0.4.4
 - less IO if bz2 in map reader
 - less IO if push to ddfs w/o writing files
