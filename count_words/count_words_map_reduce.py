@@ -7,9 +7,9 @@ TODO:
 - check disco v0.4.4
 """
 
+from __future__ import print_function
 import argparse
 import csv
-from disco.ddfs import DDFS
 from disco.core import Job, result_iterator
 from disco.util import kvgroup
 from disco.func import chain_reader
@@ -37,7 +37,7 @@ def main(tag, file_out):
 
 if __name__ == '__main__':
 
-    tag_default   = "data:count_words"
+    tag_default = "data:count_words"
     file_out_default = "output.csv"
 
     parser = argparse.ArgumentParser(description="Count words from a tagged Disco data set using map-reduce.")
