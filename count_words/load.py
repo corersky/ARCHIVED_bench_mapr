@@ -1,29 +1,15 @@
 #!/usr/bin/env python
 """
-Count words from a .txt file. Output to .csv.
+Load data from a .txt file to Disco.
 
 TODO:
-- check ddfs tag exists
 - check disco v0.4.4
 """
 
 import argparse
-import csv
 from disco.ddfs import DDFS
-from disco.core import Job, result_iterator
-from disco.util import kvgroup
-from disco.func import chain_reader
 
-class CountWords(Job):
 
-    def map(self, line, params):
-        for word in line.split():
-            yield word, 1
-
-    def reduce(self, rows_iter, out, params):
-        for word, count in kvgroup(sorted(rows_iter)):
-            out.add(word, sum(count))
-        return None
 
 def main(tag_in, file_out):
     # Import since slave nodes do not have same namespace as master.

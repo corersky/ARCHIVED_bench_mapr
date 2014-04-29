@@ -5,8 +5,6 @@ Download bz2 files from list and upload to Disco Distributed File System.
 TODO:
 - check disco v0.4.4
 - less IO if bz2 in map reader
-- less IO if push to ddfs w/o writing files
-- decompress bz2 w/o subprocess
 """
 
 from __future__ import print_function
@@ -29,9 +27,9 @@ def download(url, file_out="download.out"):
         with open(file_out, 'wb') as f_out:
             f_out.write(f_url.read())
     except urllib2.HTTPError, e:
-        print("HTTP Error:", e.code, url)
+        print("HTTP Error:", e.code, url, file=sys.stderr)
     except urllib2.URLError, e:
-        print("URL Error:", e.reason, url)
+        print("URL Error:", e.reason, url, file=sys.stderr)
     return None
 
 def decompress_and_partition(file_bz2, file_out="decompress.out"):
@@ -56,14 +54,17 @@ def decompress_and_partition(file_bz2, file_out="decompress.out"):
             f_out.write(b"\n")
     return None
 
-def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
+def main(file_in="bz2_url_list.txt", tmp_dir="/scratch/sth499", test=False):
     """
     Download bz2 files from list and upload to Disco Distributed File System.
     """
     with open(file_in, 'r') as f_in:
         # If Disco tag exists, delete it.
-        tag="data:big"
-
+        if test:
+            tag="data:big_test"
+        else:
+            tag="data:big"
+            # TODO: RESUME HERE WITH CHOOSING TEST FILE TO LOAD. make tag an arg. fix this after doing word coutn sort runs
         if DDFS().exists(tag=tag):
             print("Deleting Disco tag {tag}.".format(tag=tag))
             DDFS().delete(tag=tag)
@@ -76,7 +77,7 @@ def main(file_in="bz2_url_list.txt", tmp="/scratch/sth499"):
 
             # Remove newlines and name file from URL.
             url = line.strip()
-            file_bz2 = os.path.join(tmp, os.path.basename(url))
+            file_bz2 = os.path.join(tmp_dir, os.path.basename(url))
             # Download bz2 file.
             download(url=url, file_out=file_bz2)
 
@@ -100,8 +101,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Download bz2 files from list and upload to Disco Distributed File System.")
     parser.add_argument("--file_in", default="bz2_url_list.txt", 
                         help="Input file list of URLs to bz2 files for download. Default: bz2_url_list.txt")
-    parser.add_argument("--tmp", default="/scratch/sth499",
+    parser.add_argument("--tmp_dir", default="/scratch/sth499",
                         help="Path where to temporarily save bz2 files for extraction and loading.")
+    parser.add_argument("--test", action="store_true",
+                        help="Load 1GB data set to tag data:big_test.")
     args = parser.parse_args()
     print(args)
-    main(file_in=args.file_in, tmp=args.tmp)
+    main(file_in=args.file_in, tmp_dir=args.tmp_dir, test=args.test)
