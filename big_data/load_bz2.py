@@ -64,7 +64,7 @@ def main(file_in="bz2_url_list.txt", tmp_dir="/scratch/sth499", test=False):
             tag="data:big_test"
         else:
             tag="data:big"
-            # TODO: RESUME HERE WITH CHOOSING TEST FILE TO LOAD. make tag an arg. fix this after doing word coutn sort runs
+            # TODO: RESUME HERE WITH CHOOSING TEST FILE TO LOAD. make tag an arg. 
         if DDFS().exists(tag=tag):
             print("Deleting Disco tag {tag}.".format(tag=tag))
             DDFS().delete(tag=tag)
@@ -98,13 +98,32 @@ def main(file_in="bz2_url_list.txt", tmp_dir="/scratch/sth499", test=False):
     return None
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Download bz2 files from list and upload to Disco Distributed File System.")
-    parser.add_argument("--file_in", default="bz2_url_list.txt", 
-                        help="Input file list of URLs to bz2 files for download. Default: bz2_url_list.txt")
-    parser.add_argument("--tmp_dir", default="/scratch/sth499",
-                        help="Path where to temporarily save bz2 files for extraction and loading.")
-    parser.add_argument("--test", action="store_true",
-                        help="Load 1GB data set to tag data:big_test.")
+    
+    file_in_default = "bz2_url_list.txt"
+    tmp_dir_default = "/tmp"
+    tag_default = "data:big"
+    
+    parser = argparse.ArgumentParser(description="Download bz2 files from list, upload to Disco and tag.")
+    parser.add_argument("--file_in",
+                        default=file_in_default, 
+                        help=("Input file list of URLs to bz2 files for download. "
+                              +"Default: {default}".format(default=file_in_default)))
+    parser.add_argument("--tmp_dir",
+                        default=tmp_dir_default,
+                        help=("Path to temporarily save bz2 files for extraction and loading. "
+                              +"Default: {default}".format(default=tmp_dir_default)))
+    parser.add_argument("--tag",
+                        default=tag_default,
+                        help=("Disco tag for input file. "
+                              +"Default: {default}".format(default=tag_default)))
+    parser.add_argument("--test",
+                        action="store_true",
+                        help=("T/F flag to load smaller 1GB data set from {file_test} to {tag_test}."
+                              .format(file_test=file_in_default+"_test", tag_test=tag_default+"_test")))
     args = parser.parse_args()
     print(args)
-    main(file_in=args.file_in, tmp_dir=args.tmp_dir, test=args.test)
+
+    if args.test:
+        file_in = args.file
+
+    main(file_in=args.file_in, tmp_dir=args.tmp_dir, tag=args.tag, test=args.test)

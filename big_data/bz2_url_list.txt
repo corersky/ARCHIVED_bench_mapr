@@ -1,16 +1,8 @@
-# TEST:
-# from http://dumps.wikimedia.org/enwiki/20140304/
-# compressed: ~0.25 GB
-# uncompressed: ~1 GB
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current1.xml-p000000010p000010000.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current2.xml-p000010001p000025000.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current3.xml-p000025001p000055000.bz2
-# ACTUAL:
 # from http://dumps.wikimedia.org/enwiki/20140304/
 # compressed: ~20 GB
 # uncompressed: ~350 GB
-# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000000010p000003356.bz2
-# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000003357p000005489.bz2
-# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000005490p000008311.bz2
-# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000008313p000010000.bz2
-# http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000010001p000012804.bz2
+http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000000010p000003356.bz2
+http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000003357p000005489.bz2
+http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000005490p000008311.bz2
+http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000008313p000010000.bz2
+http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000010001p000012804.bz2
