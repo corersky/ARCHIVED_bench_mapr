@@ -48,6 +48,7 @@ if __name__ == '__main__':
                         default=file_out_default,
                         help="Output file. Default: {default}".format(default=file_out_default))
     args = parser.parse_args()
-    print args
+
+    print(args)
     
     main(tag=args.tag, file_out=args.file_out)
