@@ -114,21 +114,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Download bz2 files from list then upload to Disco and tag.")
     parser.add_argument("--file_in",
                         default=file_in_default, 
-                        help=("Input file list of URLs to bz2 files for download. "
+                        help=("Input file list of URLs to bz2 files for download.\n"
                               +"Default: {default}".format(default=file_in_default)))
     parser.add_argument("--tmp_dir",
                         default=tmp_dir_default,
-                        help=("Path to save bz2 files for extraction and loading. "
+                        help=("Path to save bz2 files for extraction and loading.\n"
                               +"Default: {default}".format(default=tmp_dir_default)))
     parser.add_argument("--tag",
                         default=tag_default,
-                        help=("Disco tag for input file. "
+                        help=("Disco tag for input data.\n"
                               +"Default: {default}".format(default=tag_default)))
     parser.add_argument("--delete",
                         action="store_true",
-                        help="T/F flag to delete files after uploaded to Disco.")
+                        help=("T/F flag to delete files after uploaded to Disco.\n"
+                              +"Default: {default}".format(default=str(False))))
     args = parser.parse_args()
-
     print(args)
 
     main(file_in=args.file_in, tmp_dir=args.tmp_dir, tag=args.tag, delete=args.delete)
