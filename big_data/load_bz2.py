@@ -110,9 +110,6 @@ if __name__ == '__main__':
     file_in_default = "bz2_url_list.txt"
     tmp_dir_default = "/tmp"
     tag_default = "data:big"
-    (file_in_base, ext) = os.path.splitext(file_in_default)
-    file_in_test = file_in_base + "_test" + ext
-    tag_test = tag_default + "_test"
     
     parser = argparse.ArgumentParser(description="Download bz2 files from list then upload to Disco and tag.")
     parser.add_argument("--file_in",
@@ -127,18 +124,10 @@ if __name__ == '__main__':
                         default=tag_default,
                         help=("Disco tag for input file. "
                               +"Default: {default}".format(default=tag_default)))
-    parser.add_argument("--test",
-                        action="store_true",
-                        help=("T/F flag to load smaller data set from {file} to {tag}."
-                              .format(file=file_in_test, tag=tag_test)))
     parser.add_argument("--delete",
                         action="store_true",
                         help="T/F flag to delete files after uploaded to Disco.")
     args = parser.parse_args()
-
-    if args.test:
-        args.file_in = file_in_test
-        args.tag = tag_test
 
     print(args)
 
