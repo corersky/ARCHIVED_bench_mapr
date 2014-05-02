@@ -14,27 +14,38 @@ import argparse
 from disco.ddfs import DDFS
 
 def load(file_in, tag):
-    # TODO: Rename tag data:count_words1 if tag exists.
+    """
+    Load file into Disco.
+    """
+
+    # If Disco tag exists, delete it.
+    # Don't add all-new data to an already existing tag.
     if DDFS().exists(tag=tag):
         print("WARNING: Overwriting Disco tag {tag}.".format(tag=tag), file=sys.stderr)
         DDFS().delete(tag=tag)
-    # Disco v0.4.4 requrires that ./ prefix the file to identify as a local file.
-    # http://disco.readthedocs.org/en/0.4.4/howto/chunk.html#chunking
-    print("Loading into Disco:\n{file_in}\nas\n{tag}".format(file_in=file_in, tag=tag))
+
+    # Load data into Disco Distributed File System.
+    print("Loading into Disco:\n{file_in}\nunder tag\n{tag}".format(file_in=file_in, tag=tag))
     try:
         DDFS().chunk(tag=tag, urls=[os.path.join('./', file_in)])
     except ValueError as err:
         print("ValueError: "+err.message, file=sys.stderr)
+        print("File: {file_in}".format(file_in=file_in), file=sys.stderr)
+
     return None
 
 def main(file_in, tag):
+    """
+    Load file into Disco.
+    """
+
     load(file_in, tag)
     return None
 
 if __name__ == '__main__':
 
     file_in_default  = "input.txt"
-    tag_default = "data:count_words"
+    tag_default = "data:sort"
 
     parser = argparse.ArgumentParser(description="Load data from a file into Disco and tag.")
     parser.add_argument("--file_in",
