@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Load data from a .txt file to Disco.
+Load data from a file to Disco.
 """
 
 from __future__ import print_function
@@ -40,8 +40,8 @@ def main(file_in, tag):
 
 if __name__ == '__main__':
 
-    file_in_default  = "input.txt"
-    tag_default = "data:count_words"
+    file_in_default  = "iris.csv"
+    tag_default = "data:kmeans"
 
     parser = argparse.ArgumentParser(description="Load data from a file into Disco and tag.")
     parser.add_argument("--file_in",

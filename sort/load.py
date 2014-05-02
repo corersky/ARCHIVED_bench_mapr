@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 """
 Load data from a .txt file to Disco.
-
-TODO:
-- check disco v0.4.4
-- make module load shared between count_words and sort.
 """
 
 from __future__ import print_function

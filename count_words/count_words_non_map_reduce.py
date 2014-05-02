@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Count words from a .txt file and output to .csv
-as check for map reduce implentation.
+Count words without map-reduce from a .txt file and output to .csv
+as check for map-reduce implentation.
 """
 
 from __future__ import print_function

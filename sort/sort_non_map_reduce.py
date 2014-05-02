@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-Sort a file to check the map-reduce implentation.
+Sort a .txt file without map-reduce and output to a .txt file 
+to check the map-reduce implentation.
 """
 
 from __future__ import print_function

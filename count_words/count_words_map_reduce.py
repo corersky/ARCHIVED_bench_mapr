@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 """
 Count words from a Disco tag. Output to .csv.
-
-TODO:
-- check disco v0.4.4
 """
 
 from __future__ import print_function

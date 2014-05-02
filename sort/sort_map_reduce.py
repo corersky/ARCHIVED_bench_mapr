@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 """
 Sort records from a Disco tag. Output .txt.
-
-TODO:
-- check disco v0.4.4
 """
 
 from __future__ import print_function

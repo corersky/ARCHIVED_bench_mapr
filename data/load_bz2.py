@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 """
 Download bz2 files from list and upload to Disco Distributed File System.
-
-TODO:
-- check disco v0.4.4
-- less IO if bz2 in map reader
 """
 
 from __future__ import print_function
