@@ -21,7 +21,7 @@ def main(file_in, file_out, n_clusters):
     data = np.genfromtxt(file_in, delimiter=",")
 
     estimator = KMeans(n_clusters=n_clusters)
-    print estimator
+    print(estimator)
     estimator.fit(data)
     centers = estimator.cluster_centers_
 
@@ -42,14 +42,14 @@ if __name__ == '__main__':
                         +"Default: {default}".format(default=file_in_default))
     parser.add_argument("--file_out",
                         default=file_out_default,
-                        help="Output file. "
+                        help="Output file with cluster centers. "
                         +"Default: {default}".format(default=file_out_default))
     parser.add_argument("--n_clusters",
                         default=n_clusters_default,
                         type=int,
-                        help="Number of clusters. "
-                        +"Default: {n_clusters_default}".format(default=n_clusters_default))
+                        help="Number of cluster centers to find. "
+                        +"Default: {default}".format(default=n_clusters_default))
     args = parser.parse_args()
-    print args
+    print(args)
 
     main(file_in=args.file_in, file_out=args.file_out, n_clusters=args.n_clusters)
