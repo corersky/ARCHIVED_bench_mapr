@@ -3,7 +3,6 @@
 Count words from a Disco tag. Output to .csv.
 
 TODO:
-- make master script to run load then count_words
 - check disco v0.4.4
 """
 
@@ -31,7 +30,7 @@ def main(tag, file_out):
     job = CountWords().run(input=[tag], map_reader=chain_reader)
     with open(file_out, 'w') as f_out:
         writer = csv.writer(f_out, quoting=csv.QUOTE_NONNUMERIC)
-        for word, count in result_iterator(job.wait(show=True)):
+        for word, count in result_iterator(job.wait(show=False)):
             writer.writerow([word, count])
     return None
 
@@ -48,7 +47,6 @@ if __name__ == '__main__':
                         default=file_out_default,
                         help="Output file. Default: {default}".format(default=file_out_default))
     args = parser.parse_args()
-
     print(args)
     
     main(tag=args.tag, file_out=args.file_out)

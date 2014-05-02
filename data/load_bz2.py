@@ -54,7 +54,7 @@ def decompress_and_partition(file_bz2, file_out="decompress.out"):
             f_out.write(b"\n")
     return None
 
-def main(file_in, tmp_dir, tag, delete):
+def main(file_in, tmp_dir, tag, delete, no_upload):
     """
     Download bz2 files from list and upload to Disco.
     """
@@ -90,12 +90,13 @@ def main(file_in, tmp_dir, tag, delete):
                 decompress_and_partition(file_bz2=file_bz2, file_out=file_decom)
 
             # Load data into Disco Distributed File System.
-            print("Loading into Disco:\n{file_in}".format(file_in=file_decom))
-            try:
-                DDFS().chunk(tag=tag, urls=[os.path.join('./', file_decom)])
-            except ValueError as err:
-                print("ValueError: " + err.message, file=sys.stderr)
-                print("File: {file_decom}".format(file_decom=file_decom), file=sys.stderr)
+            if not no_upload:
+                print("Loading into Disco:\n{file_in}\nunder tag\n{tag}".format(file_in=file_decom, tag=tag))
+                try:
+                    DDFS().chunk(tag=tag, urls=[os.path.join('./', file_decom)])
+                except ValueError as err:
+                    print("ValueError: " + err.message, file=sys.stderr)
+                    print("File: {file_decom}".format(file_decom=file_decom), file=sys.stderr)
 
             # Delete bz2 and decompressed files.
             if delete:
@@ -114,21 +115,30 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Download bz2 files from list then upload to Disco and tag.")
     parser.add_argument("--file_in",
                         default=file_in_default, 
-                        help=("Input file list of URLs to bz2 files for download.\n"
+                        help=("Input file list of URLs to bz2 files for download. "
                               +"Default: {default}".format(default=file_in_default)))
     parser.add_argument("--tmp_dir",
                         default=tmp_dir_default,
-                        help=("Path to save bz2 files for extraction and loading.\n"
+                        help=("Path to save bz2 files for extraction and loading. "
                               +"Default: {default}".format(default=tmp_dir_default)))
-    parser.add_argument("--tag",
-                        default=tag_default,
-                        help=("Disco tag for input data.\n"
-                              +"Default: {default}".format(default=tag_default)))
     parser.add_argument("--delete",
                         action="store_true",
-                        help=("T/F flag to delete files after uploaded to Disco.\n"
+                        help=("True/False flag to delete files after uploaded to Disco. "
+                              +"Default: {default}".format(default=str(False))))
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--tag",
+                        default=tag_default,
+                        help=("Disco tag for uploaded data. "
+                              +"Default: {default}".format(default=tag_default)))
+    group.add_argument("--no_upload",
+                        action="store_true",
+                        help=("True/False flag to only download and decompress files, not upload to Disco. "
                               +"Default: {default}".format(default=str(False))))
     args = parser.parse_args()
     print(args)
 
-    main(file_in=args.file_in, tmp_dir=args.tmp_dir, tag=args.tag, delete=args.delete)
+    main(file_in=args.file_in,
+         tmp_dir=args.tmp_dir,
+         tag=args.tag,
+         delete=args.delete,
+         no_upload=args.no_upload)

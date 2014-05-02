@@ -4,5 +4,3 @@
 http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000000010p000003356.bz2
 http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000003357p000005489.bz2
 http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000005490p000008311.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000008313p000010000.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000010001p000012804.bz2

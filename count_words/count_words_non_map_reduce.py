@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """
-Count words from a .txt file and output .csv
+Count words from a .txt file and output to .csv
 as check for map reduce implentation.
 """
 
+from __future__ import print_function
 import argparse
 import csv
 
@@ -25,10 +26,17 @@ def main(file_in="input.txt", file_out="output.csv"):
 
 if __name__ == '__main__':
     
-    parser = argparse.ArgumentParser(description="Count words in a file without map-reduce.")
-    parser.add_argument("--file_in", default="input.txt", help="Input file. Default: input.txt")
-    parser.add_argument("--file_out", default="output.csv", help="Output file. Default: output.csv")
-    args = parser.parse_args()
-    print args
+    file_in_default = "input.txt"
+    file_out_default = "output.csv"
 
+    parser = argparse.ArgumentParser(description="Count words in a file without map-reduce.")
+    parser.add_argument("--file_in",
+                        default=file_in_default,
+                        help="Input file. Default: {default}".format(default=file_in_default))
+    parser.add_argument("--file_out",
+                        default=file_out_default,
+                        help="Output file. Default: {default}".format(default=file_out_default))
+    args = parser.parse_args()
+    print(args)
+    
     main(file_in=args.file_in, file_out=args.file_out)
