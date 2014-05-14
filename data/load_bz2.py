@@ -10,6 +10,7 @@ import os
 import bz2
 import sys
 from disco.ddfs import DDFS
+import pandas as pd
 
 def download(url, file_out="download.out"):
     """
@@ -48,6 +49,27 @@ def decompress_and_partition(file_bz2, file_out="decompress.out"):
             f_out.write(data)
             f_out.write(b"\n")
     return None
+
+def csv_to_df(fcsv):
+    """
+    Read a CSV file and return as a dataframe.
+    Ignore comments starting with #.
+    """
+    if not os.path.isfile(fcsv):
+        raise IOError("File does not exist: {fname}".format(fname=fcsv), file=sys.stderr)
+    fcsv_base, ext = os.path.splitext(fcsv)
+    fcsv_nocmts = fcsv_base + '_temp' + ext
+    if not ext == '.csv':
+        raise TypeError("File is not .csv: {fname}".format(fname=fcsv), file=sys.stderr)
+    with open(fcsv, 'r') as fcmts:
+        # Make a temporary file without comments.
+        with open(fcsv_nocmts, 'w') as fnocmts:
+            for line in fcmts:
+                if line.startswith('#'):
+                    continue
+                else:
+                    fnocmts.write(line)
+    return pd.read_csv(fcsv_nocmts, sep=',')
 
 # want: tags from datasets_ddfstags with data loaded
 # store datasets_ddfstags as df to ref dataset files
