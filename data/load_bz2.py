@@ -30,32 +30,45 @@ def download(url, file_out="download.out"):
 
 def decompress_and_partition(file_bz2, file_out="decompress.out"):
     """
-    Decompress bz2 files and partition with newlines every 100 KB.
+    Decompress bz2 files and insert newlines every 100 KB.
     Due to a bug in disco v0.4.4 for uploading, pushing a long record as a blob corrupts the existing tag.
     Chunk does not work on records over 1MB.
     See: https://groups.google.com/forum/#!searchin/disco-dev/push$20chunk/disco-dev/i9LiNiLEQ7k/95fX2sC-dtQJ
     """
     (base, ext) = os.path.splitext(file_bz2)
     if ext != '.bz2':
-        print(file_bz2)
-        raise NameError("File extension not '.bz2'.")
-    print(
-        "Decompressing and partitioning:\n"
-        +"{file_bz2}\nto\n{file_out}".format(file_bz2=file_bz2, file_out=file_out))
-    # From http://stackoverflow.com/questions/16963352/decompress-bz2-files
-    # and http://bob.ippoli.to/archives/2005/06/14/python-iterators-and-sentinel-values/
+        raise NameError("File extension not '.bz2':{fname}".format(fname=file_bz2))
+    print("Decompressing and partitioning:\n"
+          +"{file_bz2}\nto\n{file_out}".format(file_bz2=file_bz2, file_out=file_out))
+    # Read large file incrementally and insert newlines every 100 KB. From:
+    # http://stackoverflow.com/questions/16963352/decompress-bz2-files
+    # http://bob.ippoli.to/archives/2005/06/14/python-iterators-and-sentinel-values/
     with open(file_out, 'wb') as f_out, bz2.BZ2File(file_bz2, 'rb') as f_bz2:
         for data in iter(lambda : f_bz2.read(100*1024), b''):
             f_out.write(data)
             f_out.write(b"\n")
     return None
 
+# def
+# input: fin, output: dfout
+# read in csv as pandas df
+# check csv format
+# make tmp file for no comments
+
+# def
+# for line in bz2_urls_ddfs_tags.txt, download file and load to tag
+# 
+# read data_sets_ddfs_tags.txt as dataframe dsets
+# for file in dsets, convert csv to df, read in csv
+
+####################
+# REDO BELOW HERE
+
 def main(file_in, tmp_dir, tag, delete, no_upload):
     """
     Download bz2 files from list and upload to Disco.
     """
     with open(file_in, 'r') as f_in:
-
         # If Disco tag exists, delete it.
         # Don't add all-new data to an already existing tag.
         if DDFS().exists(tag=tag):

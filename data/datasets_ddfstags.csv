@@ -1,0 +1,10 @@
+# CSV with data sets of bz2 URLs matched with Disco Distributed File System tags.
+"data_set","ddfs_tag"
+"bz2_urls_02G.txt","02G"
+"bz2_urls_05G.txt","05G"
+"bz2_urls_100G.txt","100G"
+"bz2_urls_10G.txt","10G"
+"bz2_urls_1G.txt","1G"
+"bz2_urls_300G.txt","300G"
+"bz2_urls_30G.txt","30G"
+"bz2_urls_3G.txt","3G"
