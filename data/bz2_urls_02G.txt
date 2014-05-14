@@ -1,0 +1,4 @@
+# List of bz2 URLs for download.
+# From http://dumps.wikimedia.org/enwiki/20140304/
+# Uncompressed size: 0.18 GB
+http://dumps.wikimedia.org/enwiki-20140304-pages-meta-current1.xml-p000000010p000010000.bz2

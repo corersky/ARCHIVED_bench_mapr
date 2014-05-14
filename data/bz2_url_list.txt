@@ -1,6 +1,0 @@
-# from http://dumps.wikimedia.org/enwiki/20140304/
-# compressed: ~20 GB
-# uncompressed: ~350 GB
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000000010p000003356.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000003357p000005489.bz2
-http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000005490p000008311.bz2
