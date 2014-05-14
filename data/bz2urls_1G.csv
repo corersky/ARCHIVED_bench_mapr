@@ -1,0 +1,6 @@
+# CSV with bz2 URLs matched to Disco Distributed File System tags as a data set.
+# From http://dumps.wikimedia.org/enwiki/20140304/
+# Total uncompressed size: 0.89 GB
+"http://dumps.wikimedia.org/enwiki-20140304-pages-meta-current1.xml-p000000010p000010000.bz2","1G"
+"http://dumps.wikimedia.org/enwiki-20140304-pages-meta-current2.xml-p000010001p000025000.bz2","1G"
+"http://dumps.wikimedia.org/enwiki-20140304-pages-meta-current3.xml-p000025001p000055000.bz2","1G"

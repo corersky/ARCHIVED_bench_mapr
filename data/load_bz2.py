@@ -49,6 +49,14 @@ def decompress_and_partition(file_bz2, file_out="decompress.out"):
             f_out.write(b"\n")
     return None
 
+# want: tags from datasets_ddfstags with data loaded
+# store datasets_ddfstags as df to ref dataset files
+# 
+# need bz2urls_ddfstags. load as df. for every file, load and tag it.
+#
+# for each file form datasets_ddfstags, read bz2urls from file,
+# get bz2 tag from bz2urls_ddfstags
+
 # def
 # input: fin, output: dfout
 # read in csv as pandas df
