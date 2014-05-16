@@ -1,0 +1,11 @@
+# CSV with csv files matched to Disco Distributed File System tags individually.
+"csv","settag"
+"bz2urls_settag_02G.csv","0.2G"
+"bz2urls_settag_05G.csv","0.5G"
+"bz2urls_settag_1G.csv","1G"
+"bz2urls_settag_3G.csv","3G"
+"bz2urls_settag_10G.csv","10G"
+"bz2urls_settag_30G.csv","30G"
+"bz2urls_settag_100G.csv","100G"
+"bz2urls_settag_300G.csv","300G"
+
