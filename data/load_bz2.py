@@ -16,19 +16,15 @@ from disco.ddfs import DDFS
 def create_df_concat(fcsv_list):
     """
     Read in a list of CSV files and combine into a single dataframe.
+    Basename of CSV files are used as top level of heirarchical index.
     """
     df_dict = {}
-    for fin in fcsv_list:
-        with open(fin, 'r') as fi:
-            for line in fi:
-                # Skip commented lines.
-                if line.startswith('#'):
-                    continue
-                fcsv = line.strip()
-                (key, ext) = os.path.splitext(fcsv)
-                df = csv_to_df(fcsv=fcsv)
-                df_dict[key] = df
-            df_concat = pd.concat(df_dict)
+    for fcsv in fcsv_list:
+        df = csv_to_df(fcsv=fcsv)
+        fcsv_basename = os.path.basename(fcsv)
+        (fcsv_base, fcsv_ext) = os.path.splitext(fcsv_basename)
+        df_dict[fcsv_base] = df
+    df_concat = pd.concat(df_dict)
     return df_concat
 
 def csv_to_df(fcsv):
@@ -116,34 +112,34 @@ def main(fcsv_list, tmp_dir, delete, no_upload):
         else:
             print("INFO: Downloading:\n{url}\nto\n{fout}".format(url=bz2url, fout=fbz2))
             download(url=bz2url, fout=fbz2)
-        # Decompress and partition bz2 file if it doesn't exist.
-        fdecom = os.path.splitext(fbz2)[0]
-        if os.path.isfile(fdecom):
-            print("INFO: Skipping decompress and partition. "
-                  +"File already exists:\n{fdecom}".format(fdecom=fdecom))
-        else:
-            print("INFO: Decompressing and partitioning:\n"
-                  +"{fbz2}\nto\n{fout}".format(fbz2=fbz2, fout=fdecom))
-            decompress_and_partition(fbz2=fbz2, fout=fdecom)
-        # Load data into Disco Distributed File System if it doesn't exist.
-        if DDFS().exists(tag=filetag):
-            print("INFO: Skipping Disco upload. "
-                  +"Tag already exists:\n{tag}.".format(tag=filetag))
-        else:
-            print("INFO: Loading into Disco:"
-                  +"\n{fdecom}\nunder tag\n{tag}".format(fdecom=fdecom, tag=filetag))
-            upload_to_ddfs(fdecom=fdecom, tag=filetag)
-        # Delete bz2 and decompressed files.
-        if delete:
-            print("INFO: Deleting:\n{fbz2}\n{fdecom}".format(fbz2=fbz2, fdecom=fdecom))
-            os.remove(fbz2)
-            os.remove(fdecom)
+    #     # Decompress and partition bz2 file if it doesn't exist.
+    #     fdecom = os.path.splitext(fbz2)[0]
+    #     if os.path.isfile(fdecom):
+    #         print("INFO: Skipping decompress and partition. "
+    #               +"File already exists:\n{fdecom}".format(fdecom=fdecom))
+    #     else:
+    #         print("INFO: Decompressing and partitioning:\n"
+    #               +"{fbz2}\nto\n{fout}".format(fbz2=fbz2, fout=fdecom))
+    #         decompress_and_partition(fbz2=fbz2, fout=fdecom)
+    #     # Load data into Disco Distributed File System if it doesn't exist.
+    #     if DDFS().exists(tag=filetag):
+    #         print("INFO: Skipping Disco upload. "
+    #               +"Tag already exists:\n{tag}.".format(tag=filetag))
+    #     else:
+    #         print("INFO: Loading into Disco:"
+    #               +"\n{fdecom}\nunder tag\n{tag}".format(fdecom=fdecom, tag=filetag))
+    #         upload_to_ddfs(fdecom=fdecom, tag=filetag)
+    #     # Delete bz2 and decompressed files.
+    #     if delete:
+    #         print("INFO: Deleting:\n{fbz2}\n{fdecom}".format(fbz2=fbz2, fdecom=fdecom))
+    #         os.remove(fbz2)
+    #         os.remove(fdecom)
     return None
 
 if __name__ == '__main__':
     tmp_dir_default = "/tmp"
     parser = argparse.ArgumentParser(description="Download bz2 files then upload to Disco and tag.")
-    parser.add_argument("--fcsv_list",
+    parser.add_argument("--fcsvs",
                         nargs='*',
                         default=glob.glob(os.path.join(os.getcwd(), "*.csv")),
                         help=("Input .csv files with URLs of bz2 files for download and DDFS tags for upload. "
@@ -154,15 +150,13 @@ if __name__ == '__main__':
                               +"Default: {default}".format(default=tmp_dir_default)))
     parser.add_argument("--delete",
                         action="store_true",
-                        help=("Delete files after uploading to Disco. "
-                              +"Default: {default}".format(default=str(False))))
+                        help=("Delete files after uploading to Disco."))
     parser.add_argument("--no_upload",
                         action="store_true",
-                        help=("Only download and decompress files, not upload to Disco. "
-                              +"Default: {default}".format(default=str(False))))
+                        help=("Only download and decompress files, not upload to Disco."))
     args = parser.parse_args()
     print(args)
-    main(fcsv_list=args.fcsv_list,
+    main(fcsv_list=args.fcsvs,
          tmp_dir=args.tmp_dir,
          delete=args.delete,
          no_upload=args.no_upload)
