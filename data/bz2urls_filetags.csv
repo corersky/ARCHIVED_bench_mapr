@@ -1,6 +1,6 @@
 # CSV with bz2 URLs matched to Disco Distributed File System tags individually.
 # From http://dumps.wikimedia.org/enwiki/20140304/
-# Note: CommErrors when uploading 70 GB size files. Large files commented out (tags): history1.0, 1.1, 1.2
+# Note: Disco tags must have character class [A-Za-z0-9_\-@:]+ else get CommError.
 "bz2url","filetag"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current1.xml-p000000010p000010000.bz2","current1"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current2.xml-p000010001p000025000.bz2","current2"
@@ -29,6 +29,6 @@
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current26.xml-p026625002p029625000.bz2","current26"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current25.xml-p023725001p026624999.bz2","current25"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current27.xml-p029625001p042118797.bz2","current27"
-# "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000008313p000010000.bz2","history1.0"
-# "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000005490p000008311.bz2","history1.1"
-# "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000003357p000005489.bz2","history1.2"
+"http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000008313p000010000.bz2","history1-0"
+"http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000005490p000008311.bz2","history1-1"
+"http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history1.xml-p000003357p000005489.bz2","history1-2"

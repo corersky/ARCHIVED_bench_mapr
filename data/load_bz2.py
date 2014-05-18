@@ -32,11 +32,11 @@ def csv_to_df(fcsv):
     Ignore comments starting with #.
     """
     if not os.path.isfile(fcsv):
-        raise IOError("File does not exist: {fname}".format(fname=fcsv))
+        raise IOError(("File does not exist: {fname}").format(fname=fcsv))
     (fcsv_base, ext) = os.path.splitext(fcsv)
     fcsv_nocmts = fcsv_base + '_temp' + ext
     if ext != '.csv':
-        raise IOError("File extension not '.csv': {fname}".format(fname=fcsv))
+        raise IOError(("File extension not '.csv': {fname}").format(fname=fcsv))
     with open(fcsv, 'r') as fcmts:
         # Make a temporary file without comments.
         with open(fcsv_nocmts, 'w') as fnocmts:
@@ -69,7 +69,7 @@ def decompress_and_partition(fbz2, fout="decompress.out"):
     """
     (base, ext) = os.path.splitext(fbz2)
     if ext != '.bz2':
-        raise IOError("File extension not '.bz2': {fname}".format(fname=fbz2))
+        raise IOError(("File extension not '.bz2': {fname}").format(fname=fbz2))
     # Read large file incrementally and insert newlines every 100 KB. From:
     # http://stackoverflow.com/questions/16963352/decompress-bz2-files
     # http://bob.ippoli.to/archives/2005/06/14/python-iterators-and-sentinel-values/
@@ -79,50 +79,108 @@ def decompress_and_partition(fbz2, fout="decompress.out"):
             fo.write(b"\n")
     return None
 
-def main(fcsv_list, data_dir, verbose, delete, no_upload):
+class ErrMsg(object):
+    """
+    Print custom error messages.
+    """
+    _err_count = 0
+
+    def __init__(self):
+        """
+        Initialize.
+        """
+        # TODO: for future
+        return None
+
+    def __del__(self):
+        """
+        Deconstruct.
+        """
+        # TODO: for future
+        return None
+
+    def eprint(self, err):
+        """
+        Print custom error message.
+        """
+        print(("ERROR: {err}").format(err=err), file=sys.stderr)
+        ErrMsg._err_count += 1
+        return None
+
+    def esum(self):
+        """
+        Print tally of errors.
+        """
+        if ErrMsg._err_count == 0:
+            print("INFO: No errors occured.")
+        else:
+            print(("ERROR: {num} errors occurred. "
+                   +"Search output above for 'ERROR:'").format(num=ErrMsg._err_count), file=sys.stderr)
+        return None
+
+def main(args):
     """
     Input .csv files with URLs of bz2 files for download
     and DDFS tags for upload.
     """
     # Read in CSV files to dataframes to manage tags of bz2 files.
-    df_concat = create_df_concat(fcsv_list=fcsv_list)
-    select_filetags = df_concat['filetag'].notnull()
-    df_filetags = df_concat[select_filetags]
-    for (idx, bz2url, filetag) in df_filetags[['bz2url', 'filetag']].itertuples():
+    df_concat = create_df_concat(fcsv_list=args.fcsvs)
+    # Load all bz2 files into Disco.
+    df_bz2urls_filetags = df_concat.dropna(subset=['bz2url', 'filetag'])
+    for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         # Download bz2 file if it doesn't exist.
-        fbz2 = os.path.join(data_dir, os.path.basename(bz2url))
+        fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         if os.path.isfile(fbz2):
-            if verbose: print("INFO: Skipping download. File already exists:\n{fbz2}".format(fbz2=fbz2))
+            if args.verbose: print(("INFO: Skipping download. File already exists:\n {fbz2}").format(fbz2=fbz2))
         else:
-            if verbose: print("INFO: Downloading:\n{url}\nto:\n{fout}".format(url=bz2url, fout=fbz2))
+            if args.verbose: print(("INFO: Downloading:\n {url}\n to:\n {fout}").format(url=bz2url, fout=fbz2))
             try: download(url=bz2url, fout=fbz2)
-            except: print("ERROR: {err}".format(err=sys.exc_info()), file=sys.stderr)
+            except: ErrMsg().eprint(err=sys.exc_info())
         # Decompress and partition bz2 file if it doesn't exist.
         fdecom = os.path.splitext(fbz2)[0]
         if os.path.isfile(fdecom):
-            if verbose: print("INFO: Skipping decompress and partition. "
-                              +"File already exists:\n{fdecom}".format(fdecom=fdecom))
+            if args.verbose: print(("INFO: Skipping decompress and partition. "
+                                    +"File already exists:\n {fdecom}").format(fdecom=fdecom))
         else:
-            if verbose: print("INFO: Decompressing and partitioning:\n"
-                              +"{fbz2}\nto:\n{fout}".format(fbz2=fbz2, fout=fdecom))
+            if args.verbose: print(("INFO: Decompressing and partitioning:\n"
+                                    +" {fbz2}\n to:\n {fout}").format(fbz2=fbz2, fout=fdecom))
             try: decompress_and_partition(fbz2=fbz2, fout=fdecom)
-            except: print("ERROR: {err}".format(err=sys.exc_info()), file=sys.stderr)
+            except: ErrMsg().eprint(err=sys.exc_info())
         # Load data into Disco Distributed File System if it doesn't exist.
         if DDFS().exists(tag=filetag):
-            if verbose: print("INFO: Skipping Disco upload. "
-                              +"Tag already exists:\n{tag}.".format(tag=filetag))
+            if args.verbose: print(("INFO: Skipping Disco upload. "
+                                    +"Tag already exists:\n {tag}.").format(tag=filetag))
         else:
-            if verbose: print("INFO: Loading into Disco:"
-                              +"\n{fdecom}\nunder tag:\n{tag}".format(fdecom=fdecom, tag=filetag))
+            if args.verbose: print(("INFO: Loading into Disco:\n"
+                                    +" {fdecom}\n under tag:\n {tag}").format(fdecom=fdecom, tag=filetag))
             try: DDFS().chunk(tag=filetag, urls=[os.path.join('./', fdecom)])
-            except: print("ERROR: {err}".format(err=sys.exc_info()), file=sys.stderr)
+            except: ErrMsg().eprint(err=sys.exc_info())
         # Delete bz2 and decompressed files if wanted.
-        if delete:
-            print("INFO: Deleting:\n{fbz2}\n{fdecom}".format(fbz2=fbz2, fdecom=fdecom))
+        if args.delete:
+            if args.verbose: print(("INFO: Deleting:\n {fbz2}\n {fdecom}").format(fbz2=fbz2, fdecom=fdecom))
             try:
                 os.remove(fbz2)
                 os.remove(fdecom)
-            except: print("ERROR: {err}".format(err=sys.exc_info()), file=sys.stderr)
+            except: ErrMsg().eprint(err=sys.exc_info())
+    # Match 'settag' to 'filetag'. Use 'bz2url' to match.
+    # One 'settag' can match many 'filetag'. Must have all 'filetag' loaded.
+    # Append matched 'bz2url' data to 'settag' into Disco.
+    df_bz2urls_settags = df_concat.dropna(subset=['bz2url', 'settag'])
+    for (idx, bz2url, settag) in df_bz2urls_settags[['bz2url', 'settag']].itertuples():
+        # Reset variables.
+        criteria = ''
+        matched_filetag = ''
+        criteria = (df_bz2urls_filetags['bz2url'] == bz2url)
+        matched_filetag = df_bz2urls_filetags[criteria]['filetag'].values[0]
+        if args.verbose: print(("INFO: Appending data from:\n {bz2url}\n"
+                                +" under tag:\n {filetag}\n to tag:\n"
+                                +" {settag}").format(bz2url=bz2url, filetag=matched_filetag, settag=settag))
+        try:
+            matched_filetag_urls = DDFS().urls(matched_filetag)
+            DDFS().tag(settag, matched_filetag_urls)
+        except: ErrMsg().eprint(err=sys.exc_info())
+    # Report error count.
+    if args.verbose: ErrMsg().esum()
     return None
 
 if __name__ == '__main__':
@@ -135,8 +193,8 @@ if __name__ == '__main__':
                               +"Default: [all .csv in CWD]"))
     parser.add_argument("--data_dir",
                         default=data_dir_default,
-                        help=("Path to save bz2 files for extraction and loading. "
-                              +"Default: {default}".format(default=data_dir_default)))
+                        help=(("Path to save bz2 files for extraction and loading. "
+                               +"Default: {default}").format(default=data_dir_default)))
     parser.add_argument("--verbose",
                         "-v",
                         action="store_true",
@@ -145,13 +203,9 @@ if __name__ == '__main__':
                         "-d",
                         action="store_true",
                         help=("Delete files after uploading to Disco."))
-    parser.add_argument("--no_upload",
-                        action="store_true",
-                        help=("Only download and decompress files, not upload to Disco."))
     args = parser.parse_args()
-    print(args)
-    main(fcsv_list=args.fcsvs,
-         data_dir=args.data_dir,
-         verbose=args.verbose,
-         delete=args.delete,
-         no_upload=args.no_upload)
+    if args.verbose:
+        print("INFO: Arguments:")
+        for arg in args.__dict__:
+            print(arg, args.__dict__[arg])
+    main(args)
