@@ -5,6 +5,7 @@ Plot information from job events.
 
 from __future__ import print_function
 from __future__ import division
+import ast
 import argparse
 import matplotlib.pyplot as plt
 
@@ -30,10 +31,21 @@ use instead:
 ["2014/03/14 17:26:15","master","READY: Job finished in 0:00:01.925"]
 """
 
-def events_to_obj(fevents):
+def config_to_dict(fconfig):
     """
-    Read event file and return object with metadata attributes.
+    Read Disco cluster configuration file. Return as dict.
     """
+    # Disco config file is one line and formatted as a dict.
+    with open(fconfig) as fr:
+        line = fr.read()
+        dconfig = ast.literal_eval(line)
+    return dconfig
+
+def events_to_dict(fevents):
+    """
+    Read Disco events file from map-reduce job. Return as dict.
+    """
+    
     # Log files from Disco can be > 100 MB.
     # Only read relevant portions into memory.
 
@@ -57,7 +69,7 @@ def plot(times_job, times_map, times_reduce, num_sets, set_sizes, fplot):
     """
     Plot job event data.
     """
-    # TODO: take data from event object
+    # TODO: take data from event dict, config dict
     # TODO: check len(te_map) == len(te_reduce)
     # plot
     # stacked bar chart breakdown:
@@ -139,21 +151,26 @@ def main(args):
     """
     
     # TODO: try, except, move on if fail
-    # events_to_obj(fevents)
+    # events_to_dict(fevents)
 
     # TODO: try, except, move on if fail
-    # plot(events, fplot)
+    # plot(fplot, devents, *dconfig)
     # allow for metadata to be added to plot (e.g. data size, file name, etc)
     pass
 
 if __name__ == '__main__':
     fevents_default = "events"
-    fplot_default  = "events.pdf"
+    fconfig_default = "disco_8989.config"
+    fplot_default   = "events.pdf"
     parser = argparse.ArgumentParser(description="Read Disco event file and plot performance metrics.")
     parser.add_argument("--fevents",
                         default=fevents_default,
                         help=(("Input event file from Disco job. "
                                +"Default: {default}").format(default=fevents_default)))
+    parser.add_argument("--fconfig",
+                        default=fconfig_default,
+                        help=(("Input Disco cluster configuration file. "
+                               +"Default: {default}").format(default=fconfig_default)))
     parser.add_argument("--fplot",
                         default=fplot_default,
                         help=(("Output plot file as pdf. "
