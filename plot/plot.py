@@ -30,6 +30,29 @@ use instead:
 ["2014/03/14 17:26:15","master","READY: Job finished in 0:00:01.925"]
 """
 
+def events_to_obj(fevents):
+    """
+    Read event file and return object with metadata attributes.
+    """
+    # Log files from Disco can be > 100 MB.
+    # Only read relevant portions into memory.
+
+    # create dict then make into object
+    # from collections import namedtuple
+    # http://stackoverflow.com/questions/1305532/convert-python-dict-to-object
+
+    # Need to query for:
+    # job.sys
+    # job.time_start, time_finish, time_elapsed, node_id
+    # job.map.time_start, time_finish, time_elpased, num_nodes, num_maps, num_entries, node_id
+    # job.map.map0.time_start, time_finish, time_elapsed, node_id, num_entries
+    # job.map.shuffle.time_start, time_finish, time_elapsed, node_id
+    # job.reduce.time_start, time_finish, time_elapsed, num_nodes, num_reduces, num_entries, node_id
+    # job.reduce.reduce0.time_start, time_finish, time_elapsed, node_id, num_entries
+    # job.reduce.shuffle.time_start, time_finish, time_elapsed, node_id
+
+    pass
+
 def plot(times_job, times_map, times_reduce, num_sets, set_sizes, fplot):
     """
     Plot job event data.
@@ -114,38 +137,23 @@ def main(args):
     """
     Read Disco event file and plot performance metrics.
     """
-    # Log files from Disco can be > 100 MB.
-    # Only read relevant portions into memory.
-
-    # create dict then make into object
-    # from collections import namedtuple
-    # http://stackoverflow.com/questions/1305532/convert-python-dict-to-object
-
-    # Need to query for:
-    # job.sys
-    # job.time_start, time_finish, time_elapsed, node_id
-    # job.map.time_start, time_finish, time_elpased, num_nodes, num_maps, num_entries, node_id
-    # job.map.map0.time_start, time_finish, time_elapsed, node_id, num_entries
-    # job.map.shuffle.time_start, time_finish, time_elapsed, node_id
-    # job.reduce.time_start, time_finish, time_elapsed, num_nodes, num_reduces, num_entries, node_id
-    # job.reduce.reduce0.time_start, time_finish, time_elapsed, node_id, num_entries
-    # job.reduce.shuffle.time_start, time_finish, time_elapsed, node_id
+    
+    # TODO: try, except, move on if fail
+    # events_to_obj(fevents)
 
     # TODO: try, except, move on if fail
-    plot()
+    # plot(events, fplot)
     # allow for metadata to be added to plot (e.g. data size, file name, etc)
     pass
 
-    
-
 if __name__ == '__main__':
-    fevent_default = "events"
+    fevents_default = "events"
     fplot_default  = "events.pdf"
     parser = argparse.ArgumentParser(description="Read Disco event file and plot performance metrics.")
-    parser.add_argument("--fevent",
-                        default=fevent_default,
+    parser.add_argument("--fevents",
+                        default=fevents_default,
                         help=(("Input event file from Disco job. "
-                               +"Default: {default}").format(default=fevent_default)))
+                               +"Default: {default}").format(default=fevents_default)))
     parser.add_argument("--fplot",
                         default=fplot_default,
                         help=(("Output plot file as pdf. "
