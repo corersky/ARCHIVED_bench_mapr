@@ -45,19 +45,13 @@ def events_to_dict(fevents):
     """
     Read Disco events file from map-reduce job. Return as dict.
     """
-    
     # Log files from Disco can be > 100 MB.
     # Only read relevant portions into memory.
-
-    # create dict then make into object
-    # from collections import namedtuple
-    # http://stackoverflow.com/questions/1305532/convert-python-dict-to-object
-
+    
     # Need to query for:
-    # job.sys
-    # job.time_start, time_finish, time_elapsed, node_id
-    # job.map.time_start, time_finish, time_elpased, num_nodes, num_maps, num_entries, node_id
-    # job.map.map0.time_start, time_finish, time_elapsed, node_id, num_entries
+    # x job.time_start, time_finish, time_elapsed, node_id
+    # x job.map.x time_start, x time_finish, x time_elpased, x num_nodes, x num_maps, x num_entries, x node_id
+    # job.map.map0.x time_start, x time_finish, x time_elapsed, x node_id, x num_entries
     # job.map.shuffle.time_start, time_finish, time_elapsed, node_id
     # job.reduce.time_start, time_finish, time_elapsed, num_nodes, num_reduces, num_entries, node_id
     # job.reduce.reduce0.time_start, time_finish, time_elapsed, node_id, num_entries
