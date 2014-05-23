@@ -59,7 +59,7 @@ def events_to_dict(fevents):
 
     pass
 
-def plot(times_job, times_map, times_reduce, num_sets, set_sizes, fplot):
+def plot(fplot):
     """
     Plot job event data.
     """
@@ -78,60 +78,67 @@ def plot(times_job, times_map, times_reduce, num_sets, set_sizes, fplot):
     # restof(job.map.time_elapsed)    : job.map.num_nodes, num_maps, num_entries
     # job.reduce.shuffle.time_elapsed : job.reduce.shuffle.node_id
     # restof(job.reduce.time_elapsed) : job.reduce.num_nodes, num reduces, num_entries
-    times_job      = (0.3, 0.9, 3, 9, 30)
-    times_map      = (0.1, 0.3, 1, 3, 10)
-    times_reduce   = (0.2, 0.6, 2, 6, 20)
-    num_sets    = len(times_map)
-    set_sizes   = (0.1, 0.3, 1, 3, 10)
+    set_sizes    = (0.18, 0.45, 0.89, 2.97, 10.35)
+    times_map    = (3.07, 3.12, 3.33, 4.16, 4.33)
+    times_reduce = (3.6, 9.66, 13.10, 73.14, 499.56)
+    times_job    = (6.67, 12.78, 16.43, 77.30, 503.89)
+    num_sets    = len(set_sizes)
     # Create figure object. 
     subplot_kw = {'xscale': 'log'}
     fig_kw = {'figsize': (4., 6.)}
     (fig, axes) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
     # Add bar charts.
+    widths = tuple(s*0.7 for s in set_sizes)
     bars_map = axes[0].bar(left=set_sizes,
                            height=times_map,
-                           width=set_sizes,
+                           width=widths,
                            color='r',
                            label="Map")
     bars_reduce = axes[0].bar(left=set_sizes,
                               height=times_reduce,
-                              width=set_sizes,
+                              width=widths,
                               color='y',
                               bottom=times_map,
                               label="Reduce")
     axes[1].bar(left=set_sizes,
                 height=times_map,
-                width=set_sizes,
+                width=widths,
                 color='r',
                 log=True)
     axes[1].bar(left=set_sizes,
                 height=times_reduce,
-                width=set_sizes,
+                width=widths,
                 color='y',
                 bottom=times_map,
                 log=True)
     # Must manually set at least common ylabel manually.
     fig.suptitle("Disco execution times for CountWords\nby data size and process")
     fig.text(x=0.5,
-             y=0.11,
+             y=0.085,
              s="Data set size (GB)",
              horizontalalignment='center',
              verticalalignment='center')
-    fig.text(x=0.02,
+    fig.text(x=0.04,
              y=0.5,
-             s="Elapsed time (s)",
+             s="Elapsed time (min)",
              horizontalalignment='center',
              verticalalignment='center',
              rotation='vertical')
     # Shift lower plot up to make room for legend at bottom.
     # Add metadata to legend labels.
-    box = axes[1].get_position()
-    axes[1].set_position([box.x0,
-                          (box.y0 + 0.04),
-                          box.width,
-                          box.height])
+    box0 = axes[0].get_position()
+    axes[0].set_position([box0.x0 + 0.03,
+                          box0.y0,
+                          box0.width,
+                          box0.height])
+    box1 = axes[1].get_position()
+    axes[1].set_position([box1.x0 + 0.03,
+                          (box1.y0 + 0.04),
+                          box1.width,
+                          box1.height])
     fig.legend(handles=(bars_map, bars_reduce),
                labels=(bars_map.get_label(), bars_reduce.get_label()),
+               ncol=2,
                loc='lower center',
                bbox_to_anchor=(0.05, -0.01, 0.9, 1.),
                mode='expand')
@@ -150,6 +157,8 @@ def main(args):
     # TODO: try, except, move on if fail
     # plot(fplot, devents, *dconfig)
     # allow for metadata to be added to plot (e.g. data size, file name, etc)
+    plot(args.fplot)
+
     pass
 
 if __name__ == '__main__':
