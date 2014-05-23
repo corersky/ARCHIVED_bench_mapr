@@ -44,7 +44,7 @@ def main(tag, file_out):
     """
 
     # Import since slave nodes do not have same namespace as master.
-    from count_words_map_reduce import CountWords
+    from count_words_mapr import CountWords
     job = CountWords().run(input=[tag], map_reader=chain_reader)
     with open(file_out, 'w') as f_out:
         writer = csv.writer(f_out, quoting=csv.QUOTE_NONNUMERIC)
