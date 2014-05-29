@@ -333,22 +333,24 @@ def main(args):
     pass
 
 if __name__ == '__main__':
-    fevents_default = "events"
-    fconfig_default = "disco_8989.config"
-    fplot_default   = "events.pdf"
-    parser = argparse.ArgumentParser(description="Read Disco event file and plot performance metrics.")
+    defaults = {}
+    defaults['fevents'] = "events"
+    defaults['fconfig'] = "disco_8989.config"
+    defaults['fplot']   = "events.pdf"
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
+                                     description="Read Disco event file and plot performance metrics.")
     parser.add_argument("--fevents",
-                        default=fevents_default,
-                        help=(("Input event file from Disco job. "
-                               +"Default: {default}").format(default=fevents_default)))
+                        default=defaults['fevents'],
+                        help=(("Input event file from Disco job.\n"
+                               +" Default: {default}").format(default=defaults['fevents'])))
     parser.add_argument("--fconfig",
-                        default=fconfig_default,
-                        help=(("Input Disco cluster configuration file. "
-                               +"Default: {default}").format(default=fconfig_default)))
+                        default=defaults['fconfig'],
+                        help=(("Input Disco cluster configuration file.\n"
+                               +" Default: {default}").format(default=defaults['fconfig'])))
     parser.add_argument("--fplot",
-                        default=fplot_default,
-                        help=(("Output plot file as pdf. "
-                               +"Default: {default}").format(default=fplot_default)))
+                        default=defaults['fplot'],
+                        help=(("Output plot file as pdf.\n"
+                               +" Default: {default}").format(default=defaults['fplot'])))
     parser.add_argument("--verbose",
                         "-v",
                         action="store_true",
