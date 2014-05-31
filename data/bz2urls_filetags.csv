@@ -1,7 +1,6 @@
 # CSV with bz2 URLs matched to Disco Distributed File System tags individually.
 # From http://dumps.wikimedia.org/enwiki/20140304/
 # Note: Disco tags must have character class [A-Za-z0-9_\-@:]+ else get CommError.
-# Note: Large files at end of file are commented out.
 "bz2url","filetag"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current1.xml-p000000010p000010000.bz2","current1"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current2.xml-p000010001p000025000.bz2","current2"
