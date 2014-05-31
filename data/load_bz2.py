@@ -185,7 +185,8 @@ def main(args):
 
 if __name__ == '__main__':
     data_dir_default = "/tmp"
-    parser = argparse.ArgumentParser(description="Download bz2 files then upload to Disco and tag.")
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
+                                     description="Download bz2 files then upload to Disco and tag.")
     parser.add_argument("--fcsvs",
                         nargs='*',
                         default=glob.glob(os.path.join(os.getcwd(), "*.csv")),
