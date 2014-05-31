@@ -1,0 +1,6 @@
+# CSV with bz2 URLs matched to Disco Distributed File System tags as a data set.
+# From http://dumps.wikimedia.org/enwiki/20140304/
+# Total uncompressed size: 0.94 GB
+# Note: Disco tags must have character class [A-Za-z0-9_\-@:]+ else get CommError.
+"bz2url","settag"
+"http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current7.xml-p000305002p000464997.bz2","set0-94G"

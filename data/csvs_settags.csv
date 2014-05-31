@@ -1,12 +1,11 @@
 # CSV with csv files matched to Disco Distributed File System tags individually.
 # Note: Disco tags must have character class [A-Za-z0-9_\-@:]+ else get CommError.
-# Note: Large data set at end commented out.
 "csv","settag"
 "bz2urls_set0-28G.csv","set0-28G"
-"bz2urls_set0-45G.csv","set0-45G"
-"bz2urls_set0-89G.csv","set0-89G"
+"bz2urls_set0-94G.csv","set0-94G"
 "bz2urls_set2-97G.csv","set2-97G"
-"bz2urls_set10-35G.csv","set10-35G"
+"bz2urls_set10-4G.csv","set10-4G"
 "bz2urls_set28-9G.csv","set28-9G"
 "bz2urls_set98-5G.csv","set98-5G"
-# "bz2urls_set305G.csv","set305G"
+"bz2urls_set304G.csv","set304G"
+"bz2urls_set998G.csv","set998G"
