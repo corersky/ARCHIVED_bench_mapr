@@ -2,7 +2,7 @@
 # From http://dumps.wikimedia.org/enwiki/20140304/
 # Total uncompressed size: 998 GB
 # Note: Disco tags must have character class [A-Za-z0-9_\-@:]+ else get CommError.
-"bz2url","filetag"
+"bz2url","settag"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current1.xml-p000000010p000010000.bz2","set998G"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current2.xml-p000010001p000025000.bz2","set998G"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-current3.xml-p000025001p000055000.bz2","set998G"
@@ -42,3 +42,7 @@
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000019636p000021362.bz2","set998G"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000021363p000023221.bz2","set998G"
 "http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history2.xml-p000023222p000025000.bz2","set998G"
+"http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000025001p000027150.bz2","set998G"
+"http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000027152p000030058.bz2","set998G"
+"http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000030059p000032587.bz2","set998G"
+"http://dumps.wikimedia.org/enwiki/20140304/enwiki-20140304-pages-meta-history3.xml-p000032589p000036647.bz2","set998G"

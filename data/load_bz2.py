@@ -34,9 +34,9 @@ def csv_to_df(fcsv):
     if not os.path.isfile(fcsv):
         raise IOError(("File does not exist: {fname}").format(fname=fcsv))
     (fcsv_base, ext) = os.path.splitext(fcsv)
-    fcsv_nocmts = fcsv_base + '_temp' + ext
     if ext != '.csv':
         raise IOError(("File extension not '.csv': {fname}").format(fname=fcsv))
+    fcsv_nocmts = fcsv_base + '_temp' + ext
     with open(fcsv, 'r') as fcmts:
         # Make a temporary file without comments.
         with open(fcsv_nocmts, 'w') as fnocmts:
@@ -163,8 +163,11 @@ def main(args):
                 os.remove(fdecom)
             except: ErrMsg().eprint(err=sys.exc_info())
     # Match 'settag' to 'filetag'. Use 'bz2url' to match.
-    # One 'settag' can match many 'filetag'. Must have all 'filetag' loaded.
+    # One 'settag' can match many 'filetag'.
     # Append matched 'bz2url' data to 'settag' into Disco.
+    # Note: Must have all 'filetag' loaded.
+    # idx variables are unused.
+    # TODO: Don't load settag if it already exists.
     df_bz2urls_settags = df_concat.dropna(subset=['bz2url', 'settag'])
     for (idx, bz2url, settag) in df_bz2urls_settags[['bz2url', 'settag']].itertuples():
         # Reset variables.
@@ -174,12 +177,14 @@ def main(args):
         matched_filetag = df_bz2urls_filetags[criteria]['filetag'].values[0]
         if args.verbose: print(("INFO: Appending data from:\n {bz2url}\n"
                                 +" under tag:\n {filetag}\n to tag:\n"
-                                +" {settag}").format(bz2url=bz2url, filetag=matched_filetag, settag=settag))
+                                +" {settag}").format(bz2url=bz2url,
+                                                     filetag=matched_filetag,
+                                                     settag=settag))
         try:
             matched_filetag_urls = DDFS().urls(matched_filetag)
             DDFS().tag(settag, matched_filetag_urls)
         except: ErrMsg().eprint(err=sys.exc_info())
-    # Report error count.
+    # At end, report error count.
     if args.verbose: ErrMsg().esum()
     return None
 
@@ -208,5 +213,5 @@ if __name__ == '__main__':
     if args.verbose:
         print("INFO: Arguments:")
         for arg in args.__dict__:
-            print(arg, args.__dict__[arg])
+            print('  ', arg, args.__dict__[arg])
     main(args)
