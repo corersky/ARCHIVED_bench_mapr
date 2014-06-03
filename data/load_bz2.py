@@ -215,3 +215,14 @@ if __name__ == '__main__':
         for arg in args.__dict__:
             print('  ', arg, args.__dict__[arg])
     main(args)
+
+    # TODO: add --check_filetags
+    # subopt: --ffiletags /path/to/data/*.txt
+    # for each file tags, get basename, lookup basename in bz2urls_filetags, get extracted filename
+    # get size of extracted file, report size of filetag in GB and size of source file in GB
+    #
+    # flist = glob.glob(ffiletags)
+    # bytes_per_gb = 10**9
+    # os.path.getsize(flist[0])/bytes_per_gb
+    # (filetag, ext) = os.path.splitext(os.path.basename(flist[0]))
+    # print(filetag, ext)
