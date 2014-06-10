@@ -76,7 +76,7 @@ def decompress_and_partition(fbz2, fout="decompress.out"):
     with open(fout, 'wb') as fo, bz2.BZ2File(fbz2, 'rb') as fb:
         for data in iter(lambda : fb.read(100*1024), b''):
             fo.write(data)
-            fo.write(b"\n")
+            fo.write(b'\n')
     return None
 
 class ErrMsg(object):
