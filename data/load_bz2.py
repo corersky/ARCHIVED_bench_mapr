@@ -13,6 +13,45 @@ import bz2
 import pandas as pd
 from disco.ddfs import DDFS
 
+class ErrMsg(object):
+    """
+    Print custom error messages.
+    """
+    _err_count = 0
+
+    def __init__(self):
+        """
+        Initialize.
+        """
+        # TODO: for future
+        return None
+
+    def __del__(self):
+        """
+        Deconstruct.
+        """
+        # TODO: for future
+        return None
+
+    def eprint(self, err):
+        """
+        Print custom error message.
+        """
+        print(("ERROR: {err}").format(err=err), file=sys.stderr)
+        ErrMsg._err_count += 1
+        return None
+
+    def esum(self):
+        """
+        Print tally of errors.
+        """
+        if ErrMsg._err_count == 0:
+            print("INFO: No errors occured.")
+        else:
+            print(("ERROR: {num} errors occurred."
+                   +" Search output above for 'ERROR:'").format(num=ErrMsg._err_count), file=sys.stderr)
+        return None
+
 def csv2df(fcsv):
     """
     Read a CSV file and return as a dataframe.
@@ -79,54 +118,14 @@ def decom_part(fbz2, fout="decompress.out"):
             fo.write(b'\n')
     return None
 
-class ErrMsg(object):
+def main_load(args):
     """
-    Print custom error messages.
+    Stage of main function for loading individual files:
+    - Download bz2 file if it doesn't exist.
+    - Decompress and partition bz2 file if it doesn't exist.
+    - Load data into Disco Distributed File System if it doesn't exist.
     """
-    _err_count = 0
-
-    def __init__(self):
-        """
-        Initialize.
-        """
-        # TODO: for future
-        return None
-
-    def __del__(self):
-        """
-        Deconstruct.
-        """
-        # TODO: for future
-        return None
-
-    def eprint(self, err):
-        """
-        Print custom error message.
-        """
-        print(("ERROR: {err}").format(err=err), file=sys.stderr)
-        ErrMsg._err_count += 1
-        return None
-
-    def esum(self):
-        """
-        Print tally of errors.
-        """
-        if ErrMsg._err_count == 0:
-            print("INFO: No errors occured.")
-        else:
-            print(("ERROR: {num} errors occurred."
-                   +" Search output above for 'ERROR:'").format(num=ErrMsg._err_count), file=sys.stderr)
-        return None
-
-def main(args):
-    """
-    Input .csv files with URLs of bz2 files for download
-    and DDFS tags for upload.
-    """
-    # Read in CSV files to dataframes to manage tags of bz2 files.
-    df_concat = create_df_concat(fcsv_list=args.fcsvs)
-    # Load all bz2 files into Disco.
-    df_bz2urls_filetags = df_concat.dropna(subset=['bz2url', 'filetag'])
+    df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         # Download bz2 file if it doesn't exist.
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
@@ -155,16 +154,23 @@ def main(args):
                                     +" {fdecom}\n under tag:\n {tag}").format(fdecom=fdecom, tag=filetag))
             try: DDFS().chunk(tag=filetag, urls=[os.path.join('./', fdecom)])
             except: ErrMsg().eprint(err=sys.exc_info())
-    # Check that filetags were uploaded correctly, if wanted.
-    if args.check_filetags:
-        for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
-            ftag = os.path.join(args.data_dir, filetag + '.txt')
-            if os.path.isfile(ftag):
-                if args.verbose >= 2: print(("INFO: Skipping Disco download."
-                                        +" File already exists:\n {ftag}").format(ftag=ftag))
-            else:
-                if args.verbose >= 1: print(("INFO: Downloading Disco tag:\n"
-                                        +" {tag}\n into:\n {ftag}").format(tag=filetag, ftag=ftag))
+    return None
+
+def main_check_filetags(args):
+    """
+    Stage of main function for checking filetags:
+    - Check that filetags were uploaded correctly.
+    """
+    df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
+    # Check that filetags were uploaded correctly.
+    for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
+        ftag = os.path.join(args.data_dir, filetag + '.txt')
+        if os.path.isfile(ftag):
+            if args.verbose >= 2: print(("INFO: Skipping Disco download."
+                                         +" File already exists:\n {ftag}").format(ftag=ftag))
+        else:
+            if args.verbose >= 1: print(("INFO: Downloading Disco tag:\n"
+                                         +" {tag}\n into:\n {ftag}").format(tag=filetag, ftag=ftag))
                 # TODO: use subprocess to extract from disco, ddfs xcat
                 # get size of extracted file, report size of filetag in GB and size of source file in GB
                 #
@@ -173,30 +179,57 @@ def main(args):
                 # os.path.getsize(flist[0])/bytes_per_gb
                 # (filetag, ext) = os.path.splitext(os.path.basename(flist[0]))
                 # print(filetag, ext)
+    return None
 
-    # Match 'settag' to 'filetag'. Use 'bz2url' to match.
-    # One 'settag' can match many 'filetag'.
-    # Append matched 'bz2url' data to 'settag' into Disco.
-    # Note: Must have all 'filetag' loaded.
+def main_sets(args):
+    """
+    Stage of main function for matching individual files to data sets
+    - Match 'settag' to 'filetag'. Use 'bz2url' to match.
+    - One 'settag' can match many 'filetag'.
+    - Append matched 'bz2url' data to 'settag' into Disco.
+    - Note: Must have all 'filetag' loaded.
+    """
     # idx variables are unused.
     # TODO: Don't load settag if it already exists.
+    df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
+    df_bz2urls_settags = args.df_concat.dropna(subset=['bz2url', 'settag'])
+    for (idx, bz2url, settag) in df_bz2urls_settags[['bz2url', 'settag']].itertuples():
+        # Reset variables.
+        criteria = ''
+        matched_filetag = ''
+        criteria = (df_bz2urls_filetags['bz2url'] == bz2url)
+        matched_filetag = df_bz2urls_filetags[criteria]['filetag'].values[0]
+        if args.verbose >= 1: print(("INFO: Appending data from:\n {bz2url}\n"
+                                     +" under tag:\n {filetag}\n to tag:\n"
+                                     +" {settag}").format(bz2url=bz2url,
+                                                          filetag=matched_filetag,
+                                                          settag=settag))
+        try:
+            matched_filetag_urls = DDFS().urls(matched_filetag)
+            DDFS().tag(settag, matched_filetag_urls)
+        except: ErrMsg().eprint(err=sys.exc_info())
+    return None
+
+def main(args):
+    """
+    Load data in stages:
+    - Read in CSV files to dataframes to manage tags of bz2 files.
+    - Load individual files.
+    - Check that files were loaded correctly, if wanted.
+    - Match individual files to data sets, if wanted.
+    - Report error count.
+    """
+    # Read in CSV files to dataframes to manage tags of bz2 files.
+    df_concat = create_df_concat(fcsv_list=args.fcsvs)
+    args.df_concat = df_concat
+    # Load individual files.
+    main_load(args)
+    # Check filetags, if wanted.
+    if args.check_filetags:
+        main_check_filetags(args)
+    # Match individual files to data sets, if wanted.
     if not args.no_sets:
-        df_bz2urls_settags = df_concat.dropna(subset=['bz2url', 'settag'])
-        for (idx, bz2url, settag) in df_bz2urls_settags[['bz2url', 'settag']].itertuples():
-            # Reset variables.
-            criteria = ''
-            matched_filetag = ''
-            criteria = (df_bz2urls_filetags['bz2url'] == bz2url)
-            matched_filetag = df_bz2urls_filetags[criteria]['filetag'].values[0]
-            if args.verbose >= 1: print(("INFO: Appending data from:\n {bz2url}\n"
-                                         +" under tag:\n {filetag}\n to tag:\n"
-                                         +" {settag}").format(bz2url=bz2url,
-                                                              filetag=matched_filetag,
-                                                              settag=settag))
-            try:
-                matched_filetag_urls = DDFS().urls(matched_filetag)
-                DDFS().tag(settag, matched_filetag_urls)
-            except: ErrMsg().eprint(err=sys.exc_info())
+        main_sets(args)
     # At end, report error count.
     if args.verbose >= 1: ErrMsg().esum()
     return None
