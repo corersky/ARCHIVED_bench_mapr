@@ -13,20 +13,7 @@ import bz2
 import pandas as pd
 from disco.ddfs import DDFS
 
-def create_df_concat(fcsv_list):
-    """
-    Read in a list of CSV files and combine into a single dataframe.
-    CSV file names are used as top level of heirarchical index.
-    """
-    df_dict = {}
-    for fcsv in fcsv_list:
-        df = csv_to_df(fcsv=fcsv)
-        fcsv_basename = os.path.basename(fcsv)
-        df_dict[fcsv_basename] = df
-    df_concat = pd.concat(df_dict)
-    return df_concat
-
-def csv_to_df(fcsv):
+def csv2df(fcsv):
     """
     Read a CSV file and return as a dataframe.
     Ignore comments starting with #.
@@ -49,6 +36,19 @@ def csv_to_df(fcsv):
     os.remove(fcsv_nocmts)
     return df
 
+def create_df_concat(fcsv_list):
+    """
+    Read in a list of CSV files and combine into a single dataframe.
+    CSV file names are used as top level of heirarchical index.
+    """
+    df_dict = {}
+    for fcsv in fcsv_list:
+        df = csv2df(fcsv=fcsv)
+        fcsv_basename = os.path.basename(fcsv)
+        df_dict[fcsv_basename] = df
+    df_concat = pd.concat(df_dict)
+    return df_concat
+
 def download(url, fout="download.out"):
     """
     Download a file from a URL.
@@ -60,7 +60,7 @@ def download(url, fout="download.out"):
         fo.write(f_url.read())
     return None
 
-def decompress_and_partition(fbz2, fout="decompress.out"):
+def decom_part(fbz2, fout="decompress.out"):
     """
     Decompress bz2 files and insert newlines every 100 KB.
     Due to a bug in disco v0.4.4 for uploading, pushing a long record as a blob corrupts the existing tag.
@@ -131,27 +131,27 @@ def main(args):
         # Download bz2 file if it doesn't exist.
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         if os.path.isfile(fbz2):
-            if args.verbose: print(("INFO: Skipping download. File already exists:\n {fbz2}").format(fbz2=fbz2))
+            if args.verbose >= 2: print(("INFO: Skipping download. File already exists:\n {fbz2}").format(fbz2=fbz2))
         else:
-            if args.verbose: print(("INFO: Downloading:\n {url}\n to:\n {fout}").format(url=bz2url, fout=fbz2))
+            if args.verbose >= 1: print(("INFO: Downloading:\n {url}\n to:\n {fout}").format(url=bz2url, fout=fbz2))
             try: download(url=bz2url, fout=fbz2)
             except: ErrMsg().eprint(err=sys.exc_info())
         # Decompress and partition bz2 file if it doesn't exist.
         fdecom = os.path.splitext(fbz2)[0]
         if os.path.isfile(fdecom):
-            if args.verbose: print(("INFO: Skipping decompress and partition."
+            if args.verbose >= 2: print(("INFO: Skipping decompress and partition."
                                     +" File already exists:\n {fdecom}").format(fdecom=fdecom))
         else:
-            if args.verbose: print(("INFO: Decompressing and partitioning:\n"
+            if args.verbose >= 1: print(("INFO: Decompressing and partitioning:\n"
                                     +" {fbz2}\n to:\n {fout}").format(fbz2=fbz2, fout=fdecom))
-            try: decompress_and_partition(fbz2=fbz2, fout=fdecom)
+            try: decom_part(fbz2=fbz2, fout=fdecom)
             except: ErrMsg().eprint(err=sys.exc_info())
         # Load data into Disco Distributed File System if it doesn't exist.
         if DDFS().exists(tag=filetag):
-            if args.verbose: print(("INFO: Skipping Disco upload."
+            if args.verbose >= 2: print(("INFO: Skipping Disco upload."
                                     +" Tag already exists:\n {tag}.").format(tag=filetag))
         else:
-            if args.verbose: print(("INFO: Loading into Disco:\n"
+            if args.verbose >= 1: print(("INFO: Loading into Disco:\n"
                                     +" {fdecom}\n under tag:\n {tag}").format(fdecom=fdecom, tag=filetag))
             try: DDFS().chunk(tag=filetag, urls=[os.path.join('./', fdecom)])
             except: ErrMsg().eprint(err=sys.exc_info())
@@ -160,19 +160,19 @@ def main(args):
         for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
             ftag = os.path.join(args.data_dir, filetag + '.txt')
             if os.path.isfile(ftag):
-                if args.verbose: print(("INFO: Skipping Disco download."
+                if args.verbose >= 2: print(("INFO: Skipping Disco download."
                                         +" File already exists:\n {ftag}").format(ftag=ftag))
             else:
-                if args.verbose: print(("INFO: Downloading Disco tag:\n"
+                if args.verbose >= 1: print(("INFO: Downloading Disco tag:\n"
                                         +" {tag}\n into:\n {ftag}").format(tag=filetag, ftag=ftag))
-                # TODO: download from disco
-    # get size of extracted file, report size of filetag in GB and size of source file in GB
-    #
-    # flist = glob.glob(ffiletags)
-    # bytes_per_gb = 10**9
-    # os.path.getsize(flist[0])/bytes_per_gb
-    # (filetag, ext) = os.path.splitext(os.path.basename(flist[0]))
-    # print(filetag, ext)
+                # TODO: use subprocess to extract from disco, ddfs xcat
+                # get size of extracted file, report size of filetag in GB and size of source file in GB
+                #
+                # flist = glob.glob(ffiletags)
+                # bytes_per_gb = 10**9
+                # os.path.getsize(flist[0])/bytes_per_gb
+                # (filetag, ext) = os.path.splitext(os.path.basename(flist[0]))
+                # print(filetag, ext)
 
     # Match 'settag' to 'filetag'. Use 'bz2url' to match.
     # One 'settag' can match many 'filetag'.
@@ -188,17 +188,17 @@ def main(args):
             matched_filetag = ''
             criteria = (df_bz2urls_filetags['bz2url'] == bz2url)
             matched_filetag = df_bz2urls_filetags[criteria]['filetag'].values[0]
-            if args.verbose: print(("INFO: Appending data from:\n {bz2url}\n"
-                                    +" under tag:\n {filetag}\n to tag:\n"
-                                    +" {settag}").format(bz2url=bz2url,
-                                                         filetag=matched_filetag,
-                                                         settag=settag))
+            if args.verbose >= 1: print(("INFO: Appending data from:\n {bz2url}\n"
+                                         +" under tag:\n {filetag}\n to tag:\n"
+                                         +" {settag}").format(bz2url=bz2url,
+                                                              filetag=matched_filetag,
+                                                              settag=settag))
             try:
                 matched_filetag_urls = DDFS().urls(matched_filetag)
                 DDFS().tag(settag, matched_filetag_urls)
             except: ErrMsg().eprint(err=sys.exc_info())
     # At end, report error count.
-    if args.verbose: ErrMsg().esum()
+    if args.verbose >= 1: ErrMsg().esum()
     return None
 
 if __name__ == '__main__':
@@ -225,10 +225,10 @@ if __name__ == '__main__':
                         help=("Do not associate files with data sets."))
     parser.add_argument('--verbose',
                         '-v',
-                        action='store_true',
-                        help=("Print 'INFO:' messages to stdout."))
+                        action='count',
+                        help=("Print 'INFO:' messages to stdout. -vv for more verbosity."))
     args = parser.parse_args()
-    if args.verbose:
+    if args.verbose >= 1:
         print("INFO: Arguments:")
         for arg in args.__dict__:
             print('', arg, args.__dict__[arg])
