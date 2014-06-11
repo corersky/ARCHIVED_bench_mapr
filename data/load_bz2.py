@@ -10,8 +10,8 @@ import sys
 import glob
 import urllib2
 import bz2
-import subprocess32 as sub
 import pandas as pd
+from subprocess32 import Popen
 from disco.ddfs import DDFS
 
 class ErrMsg(object):
@@ -127,32 +127,41 @@ def main_load(args):
     - Load data into Disco Distributed File System if it doesn't exist.
     """
     df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
+    # Download bz2 file if it doesn't exist.
+    # TODO: parallelize, see "programming python" on threads
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
-        # Download bz2 file if it doesn't exist.
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         if os.path.isfile(fbz2):
             if args.verbose >= 2: print(("INFO: Skipping download. File already exists:\n {fbz2}").format(fbz2=fbz2))
         else:
             if args.verbose >= 1: print(("INFO: Downloading:\n {url}\n to:\n {fout}").format(url=bz2url, fout=fbz2))
+            
             try: download(url=bz2url, fout=fbz2)
             except: ErrMsg().eprint(err=sys.exc_info())
-        # Decompress and partition bz2 file if it doesn't exist.
+    # Decompress and partition bz2 file if it doesn't exist.
+    # TODO: parallelize, see "programing python" on threads
+    for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
+        fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         fdecom = os.path.splitext(fbz2)[0]
         if os.path.isfile(fdecom):
             if args.verbose >= 2: print(("INFO: Skipping decompress and partition."
-                                    +" File already exists:\n {fdecom}").format(fdecom=fdecom))
+                                         +" File already exists:\n {fdecom}").format(fdecom=fdecom))
         else:
             if args.verbose >= 1: print(("INFO: Decompressing and partitioning:\n"
-                                    +" {fbz2}\n to:\n {fout}").format(fbz2=fbz2, fout=fdecom))
+                                         +" {fbz2}\n to:\n {fout}").format(fbz2=fbz2, fout=fdecom))
             try: decom_part(fbz2=fbz2, fout=fdecom)
             except: ErrMsg().eprint(err=sys.exc_info())
-        # Load data into Disco Distributed File System if it doesn't exist.
+    # Load data into Disco Distributed File System if it doesn't exist.
+    # TODO: parallelize, see "programing python" on threads
+    for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
+        fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
+        fdecom = os.path.splitext(fbz2)[0]
         if DDFS().exists(tag=filetag):
             if args.verbose >= 2: print(("INFO: Skipping Disco upload."
-                                    +" Tag already exists:\n {tag}.").format(tag=filetag))
+                                         +" Tag already exists:\n {tag}.").format(tag=filetag))
         else:
             if args.verbose >= 1: print(("INFO: Loading into Disco:\n"
-                                    +" {fdecom}\n under tag:\n {tag}").format(fdecom=fdecom, tag=filetag))
+                                         +" {fdecom}\n under tag:\n {tag}").format(fdecom=fdecom, tag=filetag))
             try: DDFS().chunk(tag=filetag, urls=[os.path.join('./', fdecom)])
             except: ErrMsg().eprint(err=sys.exc_info())
     return None
@@ -164,10 +173,11 @@ def main_check_filetags(args):
     - Compare file size from Disco with original file size.
     """
     df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
+    # TODO: use DDFS().pull to get data, then parallelize, see "programing python" on threads
+    cmds = []
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         # Download files from Disco Distributed File System.
-        ftag = os.path.join(args.data_dir, filetag + '.txt')
-        cmd = ""
+        ftag = os.path.join(args.data_dir, filetag+'.txt')
         if os.path.isfile(ftag):
             if args.verbose >= 2: print(("INFO: Skipping Disco download."
                                          +" File already exists:\n {ftag}").format(ftag=ftag))
@@ -175,16 +185,20 @@ def main_check_filetags(args):
             if args.verbose >= 1: print(("INFO: Downloading Disco tag:\n"
                                          +" {tag}\n into:\n {ftag}").format(tag=filetag, ftag=ftag))
             cmd = "ddfs xcat "+filetag+" > "+ftag
-            sub.check_call(cmd, shell=True)
+            cmds.append(cmd)
+    processes = [Popen(cmd, shell=True) for cmd in cmds]
+    for proc in processes: proc.wait()
+    bytes_per_gb = 10**9
+    for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         # Compare file size from Disco with original file size.
-        bytes_per_gb = 10**9
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         fdecom = os.path.splitext(fbz2)[0]
         fdecom_size_gb = os.path.getsize(fdecom) / bytes_per_gb
+        ftag = os.path.join(args.data_dir, filetag+'.txt')
         ftag_size_gb = os.path.getsize(ftag) / bytes_per_gb
         frac_diff = (ftag_size_gb - fdecom_size_gb) / fdecom_size_gb
         if abs(frac_diff) > 0.1:
-            print(("WARNING: Fractional difference in files sizes is greater than 10%:\n"
+            print(("WARNING: Fractional difference in files sizes is larger than +/- 10%:\n"
                    +" Decompressed file name and size (GB):\n"
                    +"  {fdecom}\n"
                    +"  {fdecom_size}\n"
@@ -193,8 +207,9 @@ def main_check_filetags(args):
                    +"  {ftag_size}\n"
                    +" Fractional difference in file sizes, ((ftag - fdecom) / fdecom) :\n"
                    +"  {frac_diff}").format(fdecom=fdecom, fdecom_size=fdecom_size_gb,
-                                                 ftag=ftag, ftag_size=ftag_size_gb,
-                                                 frac_diff=frac_diff))
+                                            ftag=ftag, ftag_size=ftag_size_gb,
+                                            frac_diff=frac_diff),
+                  file=sys.stderr)
         elif args.verbose >= 1:
             print(("INFO: Fractional difference in file sizes:\n"
                    +" Decompressed file name and size (GB):\n"
@@ -205,8 +220,8 @@ def main_check_filetags(args):
                    +"  {ftag_size}\n"
                    +" Fractional difference in file sizes, ((ftag - fdecom) / fdecom) :\n"
                    +"  {frac_diff}").format(fdecom=fdecom, fdecom_size=fdecom_size_gb,
-                                                 ftag=ftag, ftag_size=ftag_size_gb,
-                                                 frac_diff=frac_diff))
+                                            ftag=ftag, ftag_size=ftag_size_gb,
+                                            frac_diff=frac_diff))
     return None
 
 def main_sets(args):
@@ -227,11 +242,15 @@ def main_sets(args):
         matched_filetag = ''
         criteria = (df_bz2urls_filetags['bz2url'] == bz2url)
         matched_filetag = df_bz2urls_filetags[criteria]['filetag'].values[0]
-        if args.verbose >= 1: print(("INFO: Appending data from:\n {bz2url}\n"
-                                     +" under tag:\n {filetag}\n to tag:\n"
-                                     +" {settag}").format(bz2url=bz2url,
-                                                          filetag=matched_filetag,
-                                                          settag=settag))
+        if args.verbose >= 1:
+            print(("INFO: Appending data from:\n"
+                   +" {bz2url}\n"
+                   +" under tag:\n"
+                   +" {filetag}\n"
+                   +" to tag:\n"
+                   +" {settag}").format(bz2url=bz2url,
+                                        filetag=matched_filetag,
+                                        settag=settag))
         try:
             matched_filetag_urls = DDFS().urls(matched_filetag)
             DDFS().tag(settag, matched_filetag_urls)
