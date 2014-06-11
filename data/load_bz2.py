@@ -258,7 +258,8 @@ def main_sets(args):
                 tot += sizegb
                 res -= sizegb
         # Label the dataset with the actual dataset size.
-        settag = "{tot:.2f}GB".format(tot=tot)
+        # Note: Disco tags must have character class [A-Za-z0-9_\-@:]+ else get CommError.
+        settag = ("{tot:.2f}GB".format(tot=tot)).replace('.', '-')
         settag_filetags_map[settag] = filetags
     # Append data to settag from filetags in DDFS.
     for settag in settag_filetags_map:
@@ -280,7 +281,7 @@ def main(args):
     - Read in CSV files to dataframes to manage tags of bz2 files.
     - Load individual files.
     - Check that files were loaded correctly, if wanted.
-    - Match individual files to data sets, if provided.
+    - Pack individual files to data sets, if provided.
     - Report error count.
     """
     # Read in CSV files to dataframes to manage tags of bz2 files.
@@ -291,7 +292,7 @@ def main(args):
     # Check filetags, if wanted.
     if args.check_filetags:
         main_check_filetags(args)
-    # Match individual files to data sets, if provided.
+    # Pack individual files to data sets, if provided.
     if len(args.sets_gb) > 0:
         main_sets(args)
     # At end, report error count.
