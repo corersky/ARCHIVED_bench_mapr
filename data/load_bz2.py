@@ -10,6 +10,7 @@ import sys
 import glob
 import urllib2
 import bz2
+import operator
 import pandas as pd
 from subprocess32 import Popen
 from disco.ddfs import DDFS
@@ -193,10 +194,10 @@ def main_check_filetags(args):
         # Compare file size from Disco with original file size.
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         fdecom = os.path.splitext(fbz2)[0]
-        fdecom_size_gb = os.path.getsize(fdecom) / bytes_per_gb
+        fdecom_sizegb = os.path.getsize(fdecom) / bytes_per_gb
         ftag = os.path.join(args.data_dir, filetag+'.txt')
-        ftag_size_gb = os.path.getsize(ftag) / bytes_per_gb
-        frac_diff = (ftag_size_gb - fdecom_size_gb) / fdecom_size_gb
+        ftag_sizegb = os.path.getsize(ftag) / bytes_per_gb
+        frac_diff = (ftag_sizegb - fdecom_sizegb) / fdecom_sizegb
         if abs(frac_diff) > 0.1:
             print(("WARNING: Fractional difference in files sizes is larger than +/- 10%:\n"
                    +" Decompressed file name and size (GB):\n"
@@ -206,8 +207,8 @@ def main_check_filetags(args):
                    +"  {ftag}\n"
                    +"  {ftag_size}\n"
                    +" Fractional difference in file sizes, ((ftag - fdecom) / fdecom) :\n"
-                   +"  {frac_diff}").format(fdecom=fdecom, fdecom_size=fdecom_size_gb,
-                                            ftag=ftag, ftag_size=ftag_size_gb,
+                   +"  {frac_diff}").format(fdecom=fdecom, fdecom_size=fdecom_sizegb,
+                                            ftag=ftag, ftag_size=ftag_sizegb,
                                             frac_diff=frac_diff),
                   file=sys.stderr)
         elif args.verbose >= 1:
@@ -219,42 +220,58 @@ def main_check_filetags(args):
                    +"  {ftag}\n"
                    +"  {ftag_size}\n"
                    +" Fractional difference in file sizes, ((ftag - fdecom) / fdecom) :\n"
-                   +"  {frac_diff}").format(fdecom=fdecom, fdecom_size=fdecom_size_gb,
-                                            ftag=ftag, ftag_size=ftag_size_gb,
+                   +"  {frac_diff}").format(fdecom=fdecom, fdecom_size=fdecom_sizegb,
+                                            ftag=ftag, ftag_size=ftag_sizegb,
                                             frac_diff=frac_diff))
     return None
 
 def main_sets(args):
     """
-    Stage of main function for matching individual files to data sets
-    - Match 'settag' to 'filetag'. Use 'bz2url' to match.
-    - One 'settag' can match many 'filetag'.
-    - Append matched 'bz2url' data to 'settag' into Disco.
+    Stage of main function for packing individual files into data sets.
+    - Sort filetags by size in descending order.
+    - Add filetags to a dataset as long as they can fit.
+    - Label the dataset with the actual dataset size.
+    - Append data to settag from filetags in DDFS.
     - Note: Must have all 'filetag' loaded.
     """
     # idx variables are unused.
     # TODO: Don't load settag if it already exists.
     df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
-    df_bz2urls_settags = args.df_concat.dropna(subset=['bz2url', 'settag'])
-    for (idx, bz2url, settag) in df_bz2urls_settags[['bz2url', 'settag']].itertuples():
-        # Reset variables.
-        criteria = ''
-        matched_filetag = ''
-        criteria = (df_bz2urls_filetags['bz2url'] == bz2url)
-        matched_filetag = df_bz2urls_filetags[criteria]['filetag'].values[0]
+    bytes_per_gb = 10**9
+    filetag_sizegb_map = {}
+    # Sort filetags by size in descending order.
+    for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
+        fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
+        fdecom = os.path.splitext(fbz2)[0]
+        fdecom_sizegb = os.path.getsize(fdecom) / bytes_per_gb
+        filetag_sizegb_map[filetag] = fdecom_sizegb
+    filetag_sizegb_sorted = sorted(filetag_sizegb_map.iteritems(), key=operator.itemgetter(1), reverse=True)
+    # Add filetags to a dataset as long as they can fit.
+    settag_filetags_map = {}
+    for size in args.sets_gb:
+        filetags = []
+        tot = 0.
+        res = size
+        for (filetag, sizegb) in filetag_sizegb_sorted:
+            if sizegb <= res:
+                filetags.append(filetag)
+                tot += sizegb
+                res -= sizegb
+        # Label the dataset with the actual dataset size.
+        settag = "{tot:.2f}GB".format(tot=tot)
+        settag_filetags_map[settag] = filetags
+    # Append data to settag from filetags in DDFS.
+    for settag in settag_filetags_map:
         if args.verbose >= 1:
-            print(("INFO: Appending data from:\n"
-                   +" {bz2url}\n"
-                   +" under tag:\n"
-                   +" {filetag}\n"
-                   +" to tag:\n"
-                   +" {settag}").format(bz2url=bz2url,
-                                        filetag=matched_filetag,
-                                        settag=settag))
-        try:
-            matched_filetag_urls = DDFS().urls(matched_filetag)
-            DDFS().tag(settag, matched_filetag_urls)
-        except: ErrMsg().eprint(err=sys.exc_info())
+            print(("INFO: Appending data to settag from filetags:\n"
+                   +" {settag}\n"
+                   +" {filetags}").format(settag=settag,
+                                          filetags=settag_filetags_map[settag]))
+        for filetag in settag_filetags_map[settag]:
+            try:
+                filetag_urls = DDFS().urls(filetag)
+                DDFS().tag(settag, filetag_urls)
+            except: ErrMsg().eprint(err=sys.exc_info())
     return None
 
 def main(args):
@@ -263,7 +280,7 @@ def main(args):
     - Read in CSV files to dataframes to manage tags of bz2 files.
     - Load individual files.
     - Check that files were loaded correctly, if wanted.
-    - Match individual files to data sets, if wanted.
+    - Match individual files to data sets, if provided.
     - Report error count.
     """
     # Read in CSV files to dataframes to manage tags of bz2 files.
@@ -274,35 +291,42 @@ def main(args):
     # Check filetags, if wanted.
     if args.check_filetags:
         main_check_filetags(args)
-    # Match individual files to data sets, if wanted.
-    if not args.no_sets:
+    # Match individual files to data sets, if provided.
+    if len(args.sets_gb) > 0:
         main_sets(args)
     # At end, report error count.
     if args.verbose >= 1: ErrMsg().esum()
     return None
 
 if __name__ == '__main__':
-    data_dir_default = '/tmp'
+    arg_default_map = {}
+    arg_default_map['fcsvs'] = glob.glob(os.path.join(os.getcwd(), '*.csv'))
+    arg_default_map['data_dir'] = '/tmp'
+    arg_default_map['sets_gb'] = []
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                      description="Download bz2 files then upload to Disco and tag.")
     parser.add_argument('--fcsvs',
                         nargs='*',
-                        default=glob.glob(os.path.join(os.getcwd(), '*.csv')),
+                        default=arg_default_map['fcsvs'],
                         help=("Input .csv files with URLs of bz2 files for download and DDFS tags for upload.\n"
+                              +"Example: --fcsvs /path/to/files/*.csv\n"
                               +"Default: [all .csv in CWD]"))
     parser.add_argument('--data_dir',
-                        default=data_dir_default,
+                        default=arg_default_map['data_dir'],
                         help=(("Path to save bz2 files for extraction and loading.\n"
-                               +"Default: {default}").format(default=data_dir_default)))
+                               +"Example: --data_dir /path/to/data/dir\n"
+                               +"Default: {default}").format(default=arg_default_map['data_dir'])))
     parser.add_argument('--check_filetags',
                         action='store_true',
                         help=("Check that DDFS tags of files match sizes of"
                               +" unzipped, partitioned .bz2 files.\n"
                               +"Writes 'filetag.txt' files to --data_dir"))
-    # TODO: remove no_sets option when have create filesets option
-    parser.add_argument('--no_sets',
-                        action='store_true',
-                        help=("Do not associate files with data sets."))
+    parser.add_argument('--sets_gb',
+                        nargs='+',
+                        type=float,
+                        default=arg_default_map['sets_gb'],
+                        help=(("Sizes of data sets in GB. Data sets will be formed from URLs and given DDFS tags.\n"
+                               +"Example: --sets_gb 1 3 10 30 100 300 1000")))
     parser.add_argument('--verbose',
                         '-v',
                         action='count',
