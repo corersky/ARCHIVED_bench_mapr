@@ -3,13 +3,14 @@
 Download bz2 files from list and upload to Disco Distributed File System.
 """
 
-from __future__ import print_function
+from __future__ import print_function, division
 import argparse
 import os
-import glob
 import sys
+import glob
 import urllib2
 import bz2
+import subprocess32 as sub
 import pandas as pd
 from disco.ddfs import DDFS
 
@@ -159,26 +160,53 @@ def main_load(args):
 def main_check_filetags(args):
     """
     Stage of main function for checking filetags:
-    - Check that filetags were uploaded correctly.
+    - Download files from Disco Distributed File System.
+    - Compare file size from Disco with original file size.
     """
     df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
-    # Check that filetags were uploaded correctly.
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
+        # Download files from Disco Distributed File System.
         ftag = os.path.join(args.data_dir, filetag + '.txt')
+        cmd = ""
         if os.path.isfile(ftag):
             if args.verbose >= 2: print(("INFO: Skipping Disco download."
                                          +" File already exists:\n {ftag}").format(ftag=ftag))
         else:
             if args.verbose >= 1: print(("INFO: Downloading Disco tag:\n"
                                          +" {tag}\n into:\n {ftag}").format(tag=filetag, ftag=ftag))
-                # TODO: use subprocess to extract from disco, ddfs xcat
-                # get size of extracted file, report size of filetag in GB and size of source file in GB
-                #
-                # flist = glob.glob(ffiletags)
-                # bytes_per_gb = 10**9
-                # os.path.getsize(flist[0])/bytes_per_gb
-                # (filetag, ext) = os.path.splitext(os.path.basename(flist[0]))
-                # print(filetag, ext)
+            cmd = "ddfs xcat "+filetag+" > "+ftag
+            sub.check_call(cmd, shell=True)
+        # Compare file size from Disco with original file size.
+        bytes_per_gb = 10**9
+        fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
+        fdecom = os.path.splitext(fbz2)[0]
+        fdecom_size_gb = os.path.getsize(fdecom) / bytes_per_gb
+        ftag_size_gb = os.path.getsize(ftag) / bytes_per_gb
+        frac_diff = (ftag_size_gb - fdecom_size_gb) / fdecom_size_gb
+        if abs(frac_diff) > 0.1:
+            print(("WARNING: Fractional difference in files sizes is greater than 10%:\n"
+                   +" Decompressed file name and size (GB):\n"
+                   +"  {fdecom}\n"
+                   +"  {fdecom_size}\n"
+                   +" Disco tag file name and size (GB):\n"
+                   +"  {ftag}\n"
+                   +"  {ftag_size}\n"
+                   +" Fractional difference in file sizes, ((ftag - fdecom) / fdecom) :\n"
+                   +"  {frac_diff}").format(fdecom=fdecom, fdecom_size=fdecom_size_gb,
+                                                 ftag=ftag, ftag_size=ftag_size_gb,
+                                                 frac_diff=frac_diff))
+        elif args.verbose >= 1:
+            print(("INFO: Fractional difference in file sizes:\n"
+                   +" Decompressed file name and size (GB):\n"
+                   +"  {fdecom}\n"
+                   +"  {fdecom_size}\n"
+                   +" Disco tag file name and size (GB):\n"
+                   +"  {ftag}\n"
+                   +"  {ftag_size}\n"
+                   +" Fractional difference in file sizes, ((ftag - fdecom) / fdecom) :\n"
+                   +"  {frac_diff}").format(fdecom=fdecom, fdecom_size=fdecom_size_gb,
+                                                 ftag=ftag, ftag_size=ftag_size_gb,
+                                                 frac_diff=frac_diff))
     return None
 
 def main_sets(args):
