@@ -153,7 +153,7 @@ def main_load(args):
             try: decom_part(fbz2=fbz2, fout=fdecom)
             except: ErrMsg().eprint(err=sys.exc_info())
     # Load data into Disco Distributed File System if it doesn't exist.
-    # TODO: parallelize, see "programing python" on threads
+    cmds = []
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         fdecom = os.path.splitext(fbz2)[0]
@@ -163,8 +163,14 @@ def main_load(args):
         else:
             if args.verbose >= 1: print(("INFO: Loading into Disco:\n"
                                          +" {fdecom}\n under tag:\n {tag}").format(fdecom=fdecom, tag=filetag))
-            try: DDFS().chunk(tag=filetag, urls=[os.path.join('./', fdecom)])
-            except: ErrMsg().eprint(err=sys.exc_info())
+            cmd = ("ddfs chunk {tag} {url}").format(tag=filetag, url=os.path.join('./', fdecom))
+            cmds.append(cmd)
+            # TODO: parallelize using Python API rather than system threads, see "programming python" on threads
+            # try: DDFS().chunk(tag=filetag, urls=[os.path.join('./', fdecom)])
+    try:
+        processes = [Popen(cmd, shell=True) for cmd in cmds]
+        for proc in processes: proc.wait()
+    except: ErrMsg().eprint(err=sys.exc_info())
     return None
 
 def main_check_filetags(args):
@@ -185,10 +191,12 @@ def main_check_filetags(args):
         else:
             if args.verbose >= 1: print(("INFO: Downloading Disco tag:\n"
                                          +" {tag}\n into:\n {ftag}").format(tag=filetag, ftag=ftag))
-            cmd = "ddfs xcat "+filetag+" > "+ftag
+            cmd = ("ddfs xcat {tag} > {fname}").format(tag=filetag, fname=ftag)
             cmds.append(cmd)
-    processes = [Popen(cmd, shell=True) for cmd in cmds]
-    for proc in processes: proc.wait()
+    try:
+        processes = [Popen(cmd, shell=True) for cmd in cmds]
+        for proc in processes: proc.wait()
+    except: ErrMsg().eprint(err=sys.exc_info())
     bytes_per_gb = 10**9
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         # Compare file size from Disco with original file size.
