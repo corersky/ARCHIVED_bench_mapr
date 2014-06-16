@@ -7,8 +7,8 @@ from __future__ import print_function
 from __future__ import division
 import os
 import ast
-import datetime as dt
 import argparse
+import datetime as dt
 import matplotlib.pyplot as plt
 
 def config_to_dict(fconfig):
@@ -324,12 +324,19 @@ def main(args):
     # plot(fplot, devents, *dconfig)
     # allow for metadata to be added to plot (e.g. data size, file name, etc)
 
-    # /scratch/sth499/2014-05-29_events_count_words_mapr_set2-97G_nodes4_workers4.txt
-    # /scratch/sth499/2014-05-29_events_count_words_mapr_set10-35G_nodes4_workers4.txt
-    # /scratch/sth499/2014-05-29_events_count_words_mapr_set28-9G_nodes4_workers4.txt
-    # Notes:
-    #  All workers were busy.
-    #  Shuffle at end of map always took 0.029, 0.092, 0.24 minutes.
+    (fconfig_base, ext) = os.path.splitext(args.fconfig)
+    if ext != '.csv':
+        raise IOError(("File extension is not '.csv': {fname}").format(fname=args.fconfig))
+    fconfig_nocmts = fconfig_base + '_temp' + ext
+    with open(args.fconfig, 'r') as fcmts:
+        with open(fconfig_nocmts, 'w') as fnocmts:
+            for line in fcmts:
+                if line.startswith('#'):
+                    continue
+                else:
+                    fnocomts.write(line)
+    dfconfig = pd.read_csv(fconfig_nocmts)
+    fconfigargs.fconfig
 
     plot_args = {}
     plot_args['suptitle'] = ("Disco, CountWords, 4 nodes, 4 workers\n"
@@ -346,9 +353,14 @@ def main(args):
 
 if __name__ == '__main__':
     defaults = {}
-    defaults['fplot']   = "events.pdf"
+    defaults['fconfig'] = "config.csv"
+    defaults['fplot'] = "plot.pdf"
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                      description="Read Disco event file and plot performance metrics.")
+    parser.add_argument("--fconfig",
+                        default=defaults['fconfig'],
+                        help=(("Input configuration file as .csv.\n"
+                               +" Default: {default}").format(default=defaults['fconfig'])))
     parser.add_argument("--fplot",
                         default=defaults['fplot'],
                         help=(("Output plot file as pdf.\n"

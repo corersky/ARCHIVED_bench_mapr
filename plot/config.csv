@@ -1,0 +1,9 @@
+# Configuration file for plot
+# /scratch/sth499/2014-05-29_events_count_words_mapr_set2-97G_nodes4_workers4.txt
+# /scratch/sth499/2014-05-29_events_count_words_mapr_set10-35G_nodes4_workers4.txt
+# /scratch/sth499/2014-05-29_events_count_words_mapr_set28-9G_nodes4_workers4.txt
+# Notes:
+#  All workers were busy.
+#  Shuffle at end of map always took 0.029, 0.092, 0.24 minutes.
+"suptitle","xtitle","xvalues","times_map","times_reduce"
+"Disco, CountWords, 4 nodes, 4 workers\nexectime vs data set size, no reduce","Data set size (GB)","[2.97, 10.35, 28.9]","[6.16, 13.78, 36.04]","[0, 0, 0]"
