@@ -165,7 +165,7 @@ def main_load(args):
                                          +" {fdecom}\n under tag:\n {tag}").format(fdecom=fdecom, tag=filetag))
             cmd = ("ddfs chunk {tag} {url}").format(tag=filetag, url=os.path.join('./', fdecom))
             cmds.append(cmd)
-            # TODO: parallelize using Python API rather than system threads, see "programming python" on threads
+            # TODO: parallelize using Python API rather than system, see "programming python" on threads
             # try: DDFS().chunk(tag=filetag, urls=[os.path.join('./', fdecom)])
     try:
         processes = [Popen(cmd, shell=True) for cmd in cmds]
@@ -242,12 +242,12 @@ def main_sets(args):
     - Append data to settag from filetags in DDFS.
     - Note: Must have all 'filetag' loaded.
     """
-    # idx variables are unused.
     # TODO: Don't load settag if it already exists.
     df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
     bytes_per_gb = 10**9
     filetag_sizegb_map = {}
     # Sort filetags by size in descending order.
+    # idx variables are unused.
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         fdecom = os.path.splitext(fbz2)[0]
