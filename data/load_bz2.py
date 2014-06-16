@@ -130,6 +130,7 @@ def main_load(args):
     df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
     # Download bz2 file if it doesn't exist.
     # TODO: parallelize, see "programming python" on threads
+    # quick hack: use Popen with wget to download
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         if os.path.isfile(fbz2):
@@ -141,6 +142,7 @@ def main_load(args):
             except: ErrMsg().eprint(err=sys.exc_info())
     # Decompress and partition bz2 file if it doesn't exist.
     # TODO: parallelize, see "programing python" on threads
+    # quick hack: use Popen with bunzip2 and "grep -oE '.{1,1000}' fname" to partition
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         fdecom = os.path.splitext(fbz2)[0]
