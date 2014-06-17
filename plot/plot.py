@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 """
-Plot information from job events.
+Plot elapsed times from map-reduce job.
 """
 
-from __future__ import print_function
-from __future__ import division
+from __future__ import print_function, division
 import os
 import ast
 import argparse
@@ -15,6 +14,7 @@ def config_to_dict(fconfig):
     """
     Read Disco cluster configuration file. Return as dict.
     """
+    # TODO: use configparser instead
     # Disco config file is one line and formatted as a dict.
     with open(fconfig) as fr:
         line = fr.read()
@@ -40,7 +40,7 @@ def events_to_dict(fevents):
     # Example record format:
     # ['2014/03/14 17:26:14', 'scout02', 'DONE: [map:0] Task finished in 0:00:00.716']
     # TODO: allow for chained map-reduce jobs
-
+    # TODO: move to disco-specific utils module
     # Events for a single job.
     events = {}
     timestamp_fmt = "%Y/%m/%d %H:%M:%S"
@@ -218,22 +218,6 @@ def plot(suptitle, xtitle, xvalues, times_map, times_reduce, fplot):
     """
     Plot job event data.
     """
-    # TODO: take data from event dict, config dict
-    # TODO: check len(te_map) == len(te_reduce)
-    # plot
-    # stacked bar chart breakdown:
-    # job.time_elapsed
-    # job.map.time_elapsed + job.reduce.time_elapsed + restof(job.time_elapsed)
-    # (job.map.shuffle.time_elapsed + restof(job.map.time_elapsed)
-    #   + job.reduce.shuffle.time_elapsed + restof(job.reduce.time_elapsed)
-    #   + restof(job.time_elapsed))
-    # 
-    # metadata:
-    # job.map.shuffle.time_elapsed    : job.map.shuffle.node_id
-    # restof(job.map.time_elapsed)    : job.map.num_nodes, num_maps, num_entries
-    # job.reduce.shuffle.time_elapsed : job.reduce.shuffle.node_id
-    # restof(job.reduce.time_elapsed) : job.reduce.num_nodes, num reduces, num_entries
-
     # Check inputs
     num_xvalues = len(xvalues)
     if len(times_map) != num_xvalues:
@@ -317,26 +301,21 @@ def main(args):
     """
     Read Disco event file and plot performance metrics.
     """
-    # TODO: try, except, move on if fail
-    # events_to_dict(fevents)
-
-    # TODO: try, except, move on if fail
-    # plot(fplot, devents, *dconfig)
-    # allow for metadata to be added to plot (e.g. data size, file name, etc)
-
-    (fconfig_base, ext) = os.path.splitext(args.fconfig)
-    if ext != '.csv':
-        raise IOError(("File extension is not '.csv': {fname}").format(fname=args.fconfig))
-    fconfig_nocmts = fconfig_base + '_temp' + ext
-    with open(args.fconfig, 'r') as fcmts:
-        with open(fconfig_nocmts, 'w') as fnocmts:
-            for line in fcmts:
-                if line.startswith('#'):
-                    continue
-                else:
-                    fnocomts.write(line)
-    dfconfig = pd.read_csv(fconfig_nocmts)
-    fconfigargs.fconfig
+    # TODO: allow for metadata to be added to plot (e.g. data size, file name, etc)
+    # # TODO: use configparse for config files
+    # (fconfig_base, ext) = os.path.splitext(args.fconfig)
+    # if ext != '.csv':
+    #     raise IOError(("File extension is not '.csv': {fname}").format(fname=args.fconfig))
+    # fconfig_nocmts = fconfig_base + '_temp' + ext
+    # with open(args.fconfig, 'r') as fcmts:
+    #     with open(fconfig_nocmts, 'w') as fnocmts:
+    #         for line in fcmts:
+    #             if line.startswith('#'):
+    #                 continue
+    #             else:
+    #                 fnocomts.write(line)
+    # dfconfig = pd.read_csv(fconfig_nocmts)
+    # fconfigargs.fconfig
 
     plot_args = {}
     plot_args['suptitle'] = ("Disco, CountWords, 4 nodes, 4 workers\n"

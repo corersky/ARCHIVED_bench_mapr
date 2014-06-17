@@ -54,7 +54,7 @@ class ErrMsg(object):
                    +" Search output above for 'ERROR:'").format(num=ErrMsg._err_count), file=sys.stderr)
         return None
 
-def csv2df(fcsv):
+def csv_to_df(fcsv):
     """
     Read a CSV file and return as a dataframe.
     Ignore comments starting with #.
@@ -84,7 +84,7 @@ def create_df_concat(fcsv_list):
     """
     df_dict = {}
     for fcsv in fcsv_list:
-        df = csv2df(fcsv=fcsv)
+        df = csv_to_df(fcsv=fcsv)
         fcsv_basename = os.path.basename(fcsv)
         df_dict[fcsv_basename] = df
     df_concat = pd.concat(df_dict)
