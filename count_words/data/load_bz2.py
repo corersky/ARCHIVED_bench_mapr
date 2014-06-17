@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Download bz2 files from list and upload to Hadoop.
+Download files from a list and upload to distributed file systems.
 """
 
 from __future__ import print_function, division
@@ -94,8 +94,6 @@ def download(url, fout="download.out"):
     """
     Download a file from a URL.
     """
-    # From http://stackoverflow.com/questions/4028697
-    # /how-do-i-download-a-zip-file-in-python-using-urllib2
     f_url = urllib2.urlopen(url)
     with open(fout, 'wb') as fo:
         fo.write(f_url.read())
@@ -111,9 +109,7 @@ def decom_part(fbz2, fout="decompress.out"):
     (base, ext) = os.path.splitext(fbz2)
     if ext != '.bz2':
         raise IOError(("File extension not '.bz2': {fname}").format(fname=fbz2))
-    # Read large file incrementally and insert newlines every 100 KB. From:
-    # http://stackoverflow.com/questions/16963352/decompress-bz2-files
-    # http://bob.ippoli.to/archives/2005/06/14/python-iterators-and-sentinel-values/
+    # Read large file incrementally and insert newlines every 100 KB.
     with open(fout, 'wb') as fo, bz2.BZ2File(fbz2, 'rb') as fb:
         for data in iter(lambda : fb.read(100*1024), b''):
             fo.write(data)
@@ -142,7 +138,7 @@ def main_load(args):
             except: ErrMsg().eprint(err=sys.exc_info())
     # Decompress and partition bz2 file if it doesn't exist.
     # TODO: parallelize, see "programing python" on threads
-    # quick hack: use Popen with bunzip2 and "grep -oE '.{1,1000}' fname" to partition
+    # quick hack: use Popen with "bunzip2 --keep" and "grep -oE '.{1,1000}' fname" to partition
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         fdecom = os.path.splitext(fbz2)[0]
@@ -285,6 +281,21 @@ def main_sets(args):
             except: ErrMsg().eprint(err=sys.exc_info())
     return None
 
+def main_hadoop(args):
+    """
+    Load data to Hadoop Distributed File System.
+    """
+    pass
+    # # TODO: resume here
+    # cmds = []
+    # # for all files in df
+    # # if verbose, print
+    # try:
+    #     cmd = ("hadoop fs -put {fname} {ddata}").format(fname=fdecom, ddata=args.data_dir)
+    # hadoop fs -put $f wikimedia_dumps/.
+    # # except error
+    # return None
+
 def main(args):
     """
     Load data in stages:
@@ -305,6 +316,10 @@ def main(args):
     # Pack individual files to data sets, if provided.
     if len(args.sets_gb) > 0:
         main_sets(args)
+    # Load data into Hadoop Distributed File System.
+    # # TODO: resume here
+    # if args.hadoop:
+    #     main_hadoop(args)
     # At end, report error count.
     if args.verbose >= 1: ErrMsg().esum()
     return None
