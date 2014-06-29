@@ -341,7 +341,7 @@ def main(args):
 
     plot_args = {}
     plot_args['suptitle'] = ("Hadoop, wordcount, 9 nodes\n"
-                             +"exec time vs data set size")
+                             +"elapsed time vs data set size, all sets unique")
     plot_args['xtitle'] = "Data set size (GB)"
     plot_args['xvalues'] = [0.94, 2.7, 9.3, 27.9, 93.1, 279.4, 1052.5]
     # plot_args['times_map'] = [6.16, 13.78, 36.04]

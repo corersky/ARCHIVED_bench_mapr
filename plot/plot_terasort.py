@@ -340,13 +340,13 @@ def main(args):
     # fconfigargs.fconfig
 
     plot_args = {}
-    plot_args['suptitle'] = ("Hadoop, wordcount, 9 nodes\n"
-                             +"exec time vs data set size")
+    plot_args['suptitle'] = ("Hadoop, terasort, 9 nodes\n"
+                             +"elapsed time vs data set size, sets from teragen")
     plot_args['xtitle'] = "Data set size (GB)"
-    plot_args['xvalues'] = [0.94, 2.7, 9.3, 27.9, 93.1, 279.4, 1052.5]
+    plot_args['xvalues'] = [1, 3, 10, 30, 100, 300]
     # plot_args['times_map'] = [6.16, 13.78, 36.04]
     # plot_args['times_reduce'] = [0, 0, 0]
-    plot_args['times'] = [1.867, 1.917, 4.517, 9.2, 7.883, 12.3, 68.77]
+    plot_args['times'] = [1.6588, 2.5679, 5.9771, 18.16, 58.9792, 265.7049]
     plot_args['fplot'] = args.fplot
 
     plot(**plot_args)
