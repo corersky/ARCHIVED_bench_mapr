@@ -245,21 +245,27 @@ def main_sets(args):
     bytes_per_gb = 10**9
     filetag_sizegb_map = {}
     # Sort filetags by size in descending order.
+    # Use filesize written out by Disco rather than input files due to problems uploading.
     # idx variables are unused.
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
-        fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
-        fdecom = os.path.splitext(fbz2)[0]
-        fdecom_sizegb = os.path.getsize(fdecom) / bytes_per_gb
-        filetag_sizegb_map[filetag] = fdecom_sizegb
+        ftag = os.path.join(args.data_dir, filetag+'.txt')
+        ftag_sizegb = os.path.getsize(ftag) / bytes_per_gb
+        filetag_sizegb_map[filetag] = ftag_sizegb
     filetag_sizegb_sorted = sorted(filetag_sizegb_map.iteritems(), key=operator.itemgetter(1), reverse=True)
-    # Add filetags to a dataset as long as they can fit.
+    # Add filetags to a dataset as long as they can fit. Nest the data sets.
     settag_filetags_map = {}
-    for size in args.sets_gb:
+    is_first = True
+    for size in sorted(args.sets_gb):
         filetags = []
         tot = 0.
         res = size
+        # Include smaller data sets in the next larger dataset.
+        if not is_first:
+            filetags.extend(settag_filetags_map[prev_settag])
+            tot += prev_tot
+            res -= prev_tot
         for (filetag, sizegb) in filetag_sizegb_sorted:
-            if sizegb <= res:
+            if (sizegb <= res) and (filetag not in filetags):
                 filetags.append(filetag)
                 tot += sizegb
                 res -= sizegb
@@ -267,8 +273,12 @@ def main_sets(args):
         # Note: Disco tags must have character class [A-Za-z0-9_\-@:]+ else get CommError.
         settag = ("{tot:.2f}GB".format(tot=tot)).replace('.', '-')
         settag_filetags_map[settag] = filetags
+        # Include the smaller data set in the next larger dataset.
+        prev_tot = tot
+        prev_settag = settag
+        is_first = False
     # Append data to settag from filetags in DDFS.
-    for settag in settag_filetags_map:
+    for settag in sorted(settag_filetags_map):
         if args.verbose >= 1:
             print(("INFO: Appending data to settag from filetags:\n"
                    +" {settag}\n"
@@ -316,8 +326,7 @@ def main(args):
     # Pack individual files to data sets, if provided.
     if len(args.sets_gb) > 0:
         main_sets(args)
-    # Load data into Hadoop Distributed File System.
-    # # TODO: resume here
+    # TODO: Load data into Hadoop Distributed File System.
     # if args.hadoop:
     #     main_hadoop(args)
     # At end, report error count.
