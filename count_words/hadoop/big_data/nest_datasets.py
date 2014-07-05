@@ -17,21 +17,16 @@ def main(args):
     """
     # Load files into Hadoop directory.
     if args.files_in is not None:
-        cmds = []
-        for fin in args.files_in:
-            if args.verbose >= 1: print(("INFO: Uploading\n"
-                                         +" {fin}\n into:\n {hdir}").format(fin=fin, hdir=args.hadoop_dir))
-            cmd = ("hadoop fs -put {fin} {hdir} &").format(fin=fin, hdir=args.hadoop_dir)
-            cmds.append(cmd)
-        # Execute in parallel
-        # TODO: limit to number of available processes: https://docs.python.org/2/library/queue.html
-        processes = [sub.Popen(cmd, shell=True) for cmd in cmds]
-        for proc in processes: proc.wait()
+        if args.verbose >= 1: print(("INFO: Uploading\n"
+                                     +" {fins}\n into:\n {hdir}").format(fins=args.files_in, hdir=args.files_dir))
+        cmd = ("hadoop fs -put {fins} {hdir}").format(fins=args.files_in, hdir=args.files_dir)
+        proc = sub.Popen(cmd, shell=True)
+        proc.wait()
     # Create nested datasets from data in Hadoop directory.
     bytes_per_gb = 10**9
     if args.sets_gb is not None:
         # Get file sizes and sort in descending order.
-        cmd = ("hadoop fs -du {hdir}").format(hdir=args.hadoop_dir)
+        cmd = ("hadoop fs -du {hdir}").format(hdir=args.files_dir)
         output = sub.check_output(cmd, shell=True)
         hfile_sizegb_map = dict([
                 (hfile, int(size)/bytes_per_gb) for (size, hfile) in [
@@ -71,15 +66,16 @@ def main(args):
             cmd = ("hadoop fs -mkdir -p {hset}").format(hset=hset)
             sub.Popen(cmd, shell=True)
             cmds = []
-            cmd = ("hadoop fs -cp {hfiles} {hset}").format
+            cmd = ("hadoop fs -cp {hfiles} {hset}").format()
             # processes = [sub.Popen(cmd, shell=True) for hfile in hset_hfiles_map[hset]:
     return None
 
 if __name__ == '__main__':
     arg_default_map = {}
-    arg_default_map['files_in'] = None
-    arg_default_map['hadoop_dir'] = ''
-    arg_default_map['sets_gb'] = None
+    arg_default_map['files_in']  = None
+    arg_default_map['files_dir'] = ''
+    arg_default_map['sets_gb']   = None
+    arg_default_map['sets_dir']  = ''
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                      description="Load files into Hadoop and make nested data sets.")
     parser.add_argument('--files_in',
@@ -89,18 +85,24 @@ if __name__ == '__main__':
                         help=("Files to load to Hadoop.\n"
                               +"Example: --files_in /path/to/files/*\n"
                               +"Default: {default}").format(default=arg_default_map['files_in']))
-    parser.add_argument('--hadoop_dir',
-                        default=arg_default_map['hadoop_dir'],
+    parser.add_argument('--files_dir',
+                        default=arg_default_map['files_dir'],
                         type=str,
-                        help=(("Path to load files to in Hadoop.\n"
-                               +"Example: --hadoop_dir path/to/hadoop/dir\n"
-                               +"Default: \'{default}\'").format(default=arg_default_map['hadoop_dir'])))
+                        help=(("HDFS path to load files.\n"
+                               +"Example: --files_dir path/to/hadoop/dir\n"
+                               +"Default: \'{default}\'").format(default=arg_default_map['files_dir'])))
     parser.add_argument('--sets_gb',
                         nargs='+',
                         type=float,
                         default=arg_default_map['sets_gb'],
                         help=("Sizes of data sets in GB. Data sets will be formed from files in Hadoop.\n"
-                               +"Example: --sets_gb 1 3 10 30 100 300 1000"))
+                              +"Example: --sets_gb 1 3 10 30 100 300 1000"))
+    parser.add_argument('--sets_dir',
+                        default=arg_default_map['sets_dir'],
+                        type=str,
+                        help=(("HDFS path to copy sets.\n"
+                               +"Example: --sets_dir path/to/hadoop/dir\n"
+                               +"Default: \'{default}\'").format(default=arg_default_map['sets_dir'])))
     parser.add_argument('--verbose',
                         '-v',
                         action='count',
@@ -110,5 +112,10 @@ if __name__ == '__main__':
         print("INFO: Arguments:")
         for arg in args.__dict__:
             print('', arg, args.__dict__[arg])
-    # TODO: check if hadoop dir exists
+    for hdir in (args.files_dir, args.sets_dir):
+        cmd = "hadoop fs -test -d {hdir}".format(hdir=hdir)
+        proc = sub.Popen(cmd, shell=True)
+        rc = proc.returncode
+        if rc != 0:
+            raise IOError(("HDFS directory does not exist: {hdir}").format(hdir=hdir))
     main(args)
