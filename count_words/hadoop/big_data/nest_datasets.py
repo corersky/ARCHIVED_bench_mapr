@@ -15,14 +15,14 @@ def main(args):
     Main function for loading data into Hadoop
     and creating nested datasets.
     """
-    # Load files into Hadoop directory.
+    # Load files into HDFS directory.
     if args.files_in is not None:
-        if args.verbose >= 1: print(("INFO: Uploading\n"
-                                     +" {fins}\n into:\n {fdir}").format(fins=args.files_in, fdir=args.files_dir))
-        cmd = ("hadoop fs -put {fins} {fdir}").format(fins=args.files_in, fdir=args.files_dir)
+        if args.verbose >= 1: print(("INFO: Uploading to HDFS directory from files:\n"
+                                     +" {fdir}\n {fins}").format(fdir=args.files_dir, fins=args.files_in))
+        cmd = ("hadoop fs -put {fins} {fdir}").format(fins=' '.join(args.files_in), fdir=args.files_dir)
         proc = sub.Popen(cmd, shell=True)
         proc.wait()
-    # Create nested datasets from data in Hadoop directory.
+    # Create nested datasets from files in HDFS directory.
     bytes_per_gb = 10**9
     if args.sets_gb is not None:
         # Get file sizes and sort in descending order.
@@ -61,13 +61,11 @@ def main(args):
             sdir = os.path.join(args.sets_dir, hset)
             if args.verbose >= 1:
                 print(("INFO: Appending to HDFS directory from files:\n"
-                       +" {sdir}\n"
-                       +" {hfiles}").format(sdir=sdir,
-                                            hfiles=hset_hfiles_map[hset]))
+                       +" {sdir}\n {hfiles}").format(sdir=sdir, hfiles=hset_hfiles_map[hset]))
             cmd = ("hadoop fs -mkdir -p {sdir}").format(sdir=sdir)
             sub.Popen(cmd, shell=True)
-            cmd = ("hadoop fs -cp {hfiles} {sdir}").format(hfiles=hset_hfiles_map[hset],
-                                                           sdir=sdir)
+            cmd = ("hadoop fs -cp {hfiles} {sdir}").format(hfiles=' '.join(hset_hfiles_map[hset]), sdir=sdir)
+            sub.Popen(cmd, shell=True)
     return None
 
 if __name__ == '__main__':
@@ -115,6 +113,7 @@ if __name__ == '__main__':
     for hdir in (args.files_dir, args.sets_dir):
         cmd = "hadoop fs -test -d {hdir}".format(hdir=hdir)
         proc = sub.Popen(cmd, shell=True)
+        proc.communicate()
         rc = proc.returncode
         if rc != 0:
             raise IOError(("HDFS directory does not exist: {hdir}").format(hdir=hdir))
