@@ -63,9 +63,11 @@ def main(args):
                 print(("INFO: Appending to HDFS directory from files:\n"
                        +" {sdir}\n {hfiles}").format(sdir=sdir, hfiles=hset_hfiles_map[hset]))
             cmd = ("hadoop fs -mkdir -p {sdir}").format(sdir=sdir)
-            sub.Popen(cmd, shell=True)
+            proc = sub.Popen(cmd, shell=True)
+            proc.wait()
             cmd = ("hadoop fs -cp {hfiles} {sdir}").format(hfiles=' '.join(hset_hfiles_map[hset]), sdir=sdir)
-            sub.Popen(cmd, shell=True)
+            proc = sub.Popen(cmd, shell=True)
+            proc.wait()
     return None
 
 if __name__ == '__main__':
