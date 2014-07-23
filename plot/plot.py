@@ -1,284 +1,79 @@
 #!/usr/bin/env python
 """
-Plot information from job events.
+Plot elapsed times from map-reduce job.
 """
 
-from __future__ import print_function
-from __future__ import division
+# TODO: have common module for import
+# TODO: have test module
+
+from __future__ import print_function, division
 import os
 import ast
 import argparse
+import json
 import datetime as dt
 import matplotlib.pyplot as plt
 
-def config_to_dict(fconfig):
+def create_plot_config(fjson='plot_config.json'):
     """
-    Read Disco cluster configuration file. Return as dict.
+    Create default plot configuration file.
     """
-    # Disco config file is one line and formatted as a dict.
-    with open(fconfig) as fr:
-        line = fr.read()
-        dconfig = ast.literal_eval(line.strip())
-    return dconfig
+    setting_value = {}
+    setting_value['fplot']    = 'plot.pdf'
+    setting_value['suptitle'] = ("Platform, job_type, N nodes\n"
+                                 +"exec. time vs data size")
+    setting_value['xtitle']   = "Data size (GB)"
+    setting_value['ytitle']   = "Elapsed time (min)"
+    setting_value['label1']   = "Map"
+    setting_value['xypairs1'] = [(10,1), (30,2), (100,3), (300,4)]
+    setting_value['label2']   = "Reduce"
+    setting_value['xypairs2'] = [(10,1), (30,2), (100,4), (300,8)]
+    # setting_value['label2']   = None
+    # setting_value['xypairs2'] = None
+    # Use binary read-write for cross-platform compatibility.
+    # Use indent for human readability.
+    with open(fjson, 'wb') as fp:
+        json.dump(setting_value, fp, sort_keys=True, indent=4)
 
-def duration_to_timedelta(duration):
+# def plot(suptitle, xtitle, xvalues, times_map, times_reduce, fplot):
+def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
     """
-    Convert duration from HH:MM:SS to datetime timedelta object.
+    Plot job execution times.
     """
-    duration_arr = map(float, duration.split(':'))
-    duration_td = dt.timedelta(hours=duration_arr[0],
-                               minutes=duration_arr[1],
-                               seconds=duration_arr[2])
-    return duration_td
-
-def events_to_dict(fevents):
-    """
-    Read Disco events file from map-reduce job. Return as dict.
-    """
-    # Log files from Disco can be > 100 MB.
-    # Only read relevant portions into memory.
-    # Example record format:
-    # ['2014/03/14 17:26:14', 'scout02', 'DONE: [map:0] Task finished in 0:00:00.716']
-    # TODO: allow for chained map-reduce jobs
-
-    # Events for a single job.
-    events = {}
-    timestamp_fmt = "%Y/%m/%d %H:%M:%S"
-    with open(fevents) as fr:
-        map_started = False
-        map_finished = False
-        reduce_started = False
-        reduce_finished = False
-        for line in fr:
-            arr = ast.literal_eval(line.strip())
-            # Start job
-            if 'master' in arr[1]:
-                # ["2014/03/14 17:26:13","master","Starting job"]
-                if 'Starting job' in arr[2]:
-                    events['node_id'] = arr[1]
-                    events['time_start'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                    continue
-            # Map
-            if 'master' in arr[1]:
-                # ["2014/03/14 17:26:13","master","Starting map phase"]
-                if 'Starting map phase' in arr[2]:
-                    map_started = True
-                    events['map'] = {}
-                    events['map']['node_id'] = arr[1]
-                    events['map']['time_start'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                    continue
-                # ["2014/03/14 17:26:13","master","map:0 assigned to scout02"]
-                if (('map' in arr[2])
-                    and ('assigned to' in arr[2])):
-                    # map_id is 1st word in string, e.g. map:0
-                    # node_id is last word in string, e.g. scout02
-                    map_id = (arr[2].split(None, 1)[0]).replace(':', '_')
-                    events['map'][map_id] = {}
-                    events['map'][map_id]['node_id'] = arr[2].rsplit(None, 1)[-1]
-                    events['map'][map_id]['time_start'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                    continue
-            # ["2014/03/14 17:26:13","scout02","MSG: [map:0] Done: 2017 entries mapped"]
-            if 'master' not in arr[1]:
-                if (('MSG: [map' in arr[2])
-                    and ('Done:' in arr[2])
-                    and ('entries mapped' in arr[2])):
-                    # map_id is 2nd word in string and has [], e.g. [map:0]
-                    # num_entries is 4th word in string.
-                    arr_msg = arr[2].split()
-                    map_id = (((arr_msg[1]).replace(':', '_')).replace('[', '')).replace(']', '')
-                    num_entries = int(arr_msg[3])
-                    events['map'][map_id]['num_entries'] = num_entries
-                    continue
-                # ["2014/03/14 17:26:14","scout02","DONE: [map:0] Task finished in 0:00:00.716"]
-                if (('DONE: [map' in arr[2])
-                    and ('Task finished in' in arr[2])):
-                    # map_id is 2nd word in string and has [], e.g. [map:0]
-                    # time_elapsed is last word in string, e.g. 0:00:00.716
-                    arr_msg = arr[2].split()
-                    map_id = (((arr_msg[1]).replace(':', '_')).replace('[', '')).replace(']', '')
-                    events['map'][map_id]['time_finish'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                    events['map'][map_id]['time_elapsed'] = duration_to_timedelta(arr_msg[-1])
-                    continue
-            if 'master' in arr[1]:
-                if map_started and not map_finished:
-                    # ["2014/03/14 17:26:14","master","Starting shuffle phase"]
-                    if 'Starting shuffle phase' in arr[2]:
-                        events['map']['shuffle'] = {}
-                        events['map']['shuffle']['node_id'] = arr[1]
-                        events['map']['shuffle']['time_start'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                        continue
-                    # ["2014/03/14 17:26:14","master","Finished shuffle phase in 0:00:00.003"]
-                    if 'Finished shuffle phase' in arr[2]:
-                        # time_elapsed is last word in string, e.g. 0:00:00.716
-                        events['map']['shuffle']['time_finish'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                        events['map']['shuffle']['time_elapsed'] = duration_to_timedelta(arr[2].rsplit(None, 1)[-1])
-                        continue     
-                    # ["2014/03/14 17:26:14","master","Finished map phase in 0:00:00.844"]
-                    if 'Finished map phase' in arr[2]:
-                        map_finished = True
-                        # time_elapsed is last word in string, e.g. 0:00:00.716
-                        events['map']['time_finish'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                        events['map']['time_elapsed'] = duration_to_timedelta(arr[2].rsplit(None, 1)[-1])
-                        # Tally nodes, entries, and maps.
-                        list_nodes = []
-                        events['map']['num_entries'] = 0
-                        events['map']['num_maps'] = 0
-                        for key in events['map']:
-                            if 'map_' in key:
-                                if events['map'][key]['node_id'] not in list_nodes:
-                                    list_nodes.append(events['map'][key]['node_id'])
-                                events['map']['num_entries'] += events['map'][key]['num_entries']
-                                events['map']['num_maps'] += 1
-                        events['map']['num_nodes'] = len(list_nodes)
-                        continue
-            # Reduce
-            if 'master' in arr[1]:
-                # ["2014/03/14 17:26:14","master","Starting reduce phase"]
-                if 'Starting reduce phase' in arr[2]:
-                    reduce_started = True
-                    events['reduce'] = {}
-                    events['reduce']['node_id'] = arr[1]
-                    events['reduce']['time_start'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                    continue
-                # ["2014/03/14 17:26:14","master","reduce:0 assigned to scout02"]
-                if (('reduce' in arr[2])
-                    and ('assigned to' in arr[2])):
-                    # reduce_id is 1st word in string, e.g. reduce:0
-                    # node_id is last word in string, e.g. scout02
-                    reduce_id = (arr[2].split(None, 1)[0]).replace(':', '_')
-                    events['reduce'][reduce_id] = {}
-                    events['reduce'][reduce_id]['node_id'] = arr[2].rsplit(None, 1)[-1]
-                    events['reduce'][reduce_id]['time_start'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                    continue
-            if 'master' not in arr[1]:
-                # ["2014/03/14 17:26:14","scout02","MSG: [reduce:0] Done: 11843 entries reduced"]
-                if (('MSG: [reduce' in arr[2])
-                    and ('Done:' in arr[2])
-                    and ('entries reduced' in arr[2])):
-                    # reduce_id is 2nd word in string and has [], e.g. [reduce:0]
-                    # num_entries is 4th word in string.
-                    arr_msg = arr[2].split()
-                    reduce_id = (((arr_msg[1]).replace(':', '_')).replace('[', '')).replace(']', '')
-                    num_entries = int(arr_msg[3])
-                    events['reduce'][reduce_id]['num_entries'] = num_entries
-                    continue
-                # ["2014/03/14 17:26:15","scout02","DONE: [reduce:0] Task finished in 0:00:00.867"]
-                if (('DONE: [reduce' in arr[2])
-                    and ('Task finished in' in arr[2])):
-                    # reduce_id is 2nd word in string and has [], e.g. [reduce:0]
-                    # time_elapsed is last word in string, e.g. 0:00:00.716
-                    arr_msg = arr[2].split()
-                    reduce_id = (((arr_msg[1]).replace(':', '_')).replace('[', '')).replace(']', '')
-                    events['reduce'][reduce_id]['time_finish'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                    events['reduce'][reduce_id]['time_elapsed'] = duration_to_timedelta(arr_msg[-1])
-                    continue
-            if 'master' in arr[1]:
-                if reduce_started and not reduce_finished:
-                    # ["2014/03/14 17:26:15","master","Starting shuffle phase"]
-                    if 'Starting shuffle phase' in arr[2]:
-                        events['reduce']['shuffle'] = {}
-                        events['reduce']['shuffle']['node_id'] = arr[1]
-                        events['reduce']['shuffle']['time_start'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                        continue
-                    # ["2014/03/14 17:26:15","master","Finished shuffle phase in 0:00:00.001"]
-                    if 'Finished shuffle phase' in arr[2]:
-                        # time_elapsed is last word in string, e.g. 0:00:00.716
-                        events['reduce']['shuffle']['time_finish'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                        events['reduce']['shuffle']['time_elapsed'] = duration_to_timedelta(arr[2].rsplit(None, 1)[-1])
-                        continue     
-                    # ["2014/03/14 17:26:15","master","Finished reduce phase in 0:00:01.080"]
-                    if 'Finished reduce phase' in arr[2]:
-                        reduce_finished = True
-                        # time_elapsed is last word in string, e.g. 0:00:00.716
-                        events['reduce']['time_finish'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                        events['reduce']['time_elapsed'] = duration_to_timedelta(arr[2].rsplit(None, 1)[-1])
-                        # Tally nodes, entries, and reduces.
-                        list_nodes = []
-                        events['reduce']['num_entries'] = 0
-                        events['reduce']['num_reduces'] = 0
-                        for key in events['reduce']:
-                            if 'reduce_' in key:
-                                if events['reduce'][key]['node_id'] not in list_nodes:
-                                    list_nodes.append(events['reduce'][key]['node_id'])
-                                events['reduce']['num_entries'] += events['reduce'][key]['num_entries']
-                                events['reduce']['num_reduces'] += 1
-                        events['reduce']['num_nodes'] = len(list_nodes)
-                        continue
-            # Finish job
-            # ["2014/03/14 17:26:15","master","READY: Job finished in 0:00:01.925"]
-            if 'master' in arr[1]:
-                if 'READY: Job finished' in arr[2]:
-                    # time_elapsed is last word in string, e.g. 0:00:00.716
-                    events['time_finish'] = dt.datetime.strptime(arr[0], timestamp_fmt)
-                    events['time_elapsed'] = duration_to_timedelta(arr[2].rsplit(None, 1)[-1])
-                    continue
-    return events
-
-def plot(suptitle, xtitle, xvalues, times_map, times_reduce, fplot):
-    """
-    Plot job event data.
-    """
-    # TODO: take data from event dict, config dict
-    # TODO: check len(te_map) == len(te_reduce)
-    # plot
-    # stacked bar chart breakdown:
-    # job.time_elapsed
-    # job.map.time_elapsed + job.reduce.time_elapsed + restof(job.time_elapsed)
-    # (job.map.shuffle.time_elapsed + restof(job.map.time_elapsed)
-    #   + job.reduce.shuffle.time_elapsed + restof(job.reduce.time_elapsed)
-    #   + restof(job.time_elapsed))
-    # 
-    # metadata:
-    # job.map.shuffle.time_elapsed    : job.map.shuffle.node_id
-    # restof(job.map.time_elapsed)    : job.map.num_nodes, num_maps, num_entries
-    # job.reduce.shuffle.time_elapsed : job.reduce.shuffle.node_id
-    # restof(job.reduce.time_elapsed) : job.reduce.num_nodes, num reduces, num_entries
-
-    # Check inputs
-    num_xvalues = len(xvalues)
-    if len(times_map) != num_xvalues:
-        raise IOError(("Number of map jobs != number of x-axis values.\n"
-                       +" xvalues = {xvalues}\n"
-                       +" times_map = {times_map}").format(xvalues=xvalues,
-                                                           times_map=times_map))
-    if len(times_reduce) != num_xvalues:
-        raise IOError(("Number of reduce jobs != number of x-axis values.\n"
-                       +" xvalues = {xvalues}\n"
-                       +" times_reduce = {times_reduce}").format(xvalues=xvalues,
-                                                                 times_reduce=times_reduce))
+    # Check inputs.
     (fplot_base, ext) = os.path.splitext(fplot)
     if ext != '.pdf':
         raise IOError(("File extension not '.pdf': {fname}").format(fname=fplot))
-
     # Create figure object.
-    subplot_kw = {'xscale': 'log'}
-    fig_kw = {'figsize': (4., 6.)}
-    (fig, axes) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
-    # Add bar charts.
-    widths = tuple(s*0.7 for s in xvalues)
-    bars_map = axes[0].bar(left=xvalues,
-                           height=times_map,
-                           width=widths,
-                           color='r',
-                           label="Map")
-    bars_reduce = axes[0].bar(left=xvalues,
-                              height=times_reduce,
-                              width=widths,
-                              color='y',
-                              bottom=times_map,
-                              label="Reduce")
-    axes[1].bar(left=xvalues,
-                height=times_map,
-                width=widths,
-                color='r',
-                log=True)
-    axes[1].bar(left=xvalues,
-                height=times_reduce,
-                width=widths,
-                color='y',
-                bottom=times_map,
-                log=True)
-    # Must manually set at least common ylabel manually.
+    subplot_kw = {}
+    subplot_kw['xscale'] = 'log'
+    fig_kw = {}
+    fig_kw['figsize'] = (4., 6.)
+    (fig, ax) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
+    # Plot data.
+    (x1, y1) = zip(*xypairs1)
+    if xypairs2 != None:
+        (x2, y2) = zip(*xypairs2)
+        has_2_xypairs = True
+    else:
+        print("INFO: No xypairs2.")
+        has_2_xypairs = False
+    plt1_kw = {}
+    plt1_kw['color'] = 'blue'
+    plt1_kw['linestyle'] = '-'
+    plt1_kw['marker'] = 'o'
+    plt1_kw['label'] = label1
+    ax[0].semilogx(x1, y1, **plt1_kw)
+    ax[1].loglog(x1, y1, **plt1_kw)
+    if has_2_xypairs:
+        plt2_kw = {}
+        plt2_kw['color'] = 'green'
+        plt2_kw['linestyle'] = '-'
+        plt2_kw['marker'] = 'o'
+        plt2_kw['label'] = label2
+        ax[0].semilogx(x2, y2, **plt2_kw)
+        ax[1].loglog(x2, y2, **plt2_kw)
+    # Set figure text.
     fig.suptitle(suptitle)
     fig.text(x=0.5,
              y=0.085,
@@ -287,25 +82,30 @@ def plot(suptitle, xtitle, xvalues, times_map, times_reduce, fplot):
              verticalalignment='center')
     fig.text(x=0.04,
              y=0.5,
-             s="Elapsed time (min)",
+             s=ytitle,
              horizontalalignment='center',
              verticalalignment='center',
              rotation='vertical')
     # Shift lower plot up to make room for legend at bottom.
     # Add metadata to legend labels.
-    box0 = axes[0].get_position()
-    axes[0].set_position([box0.x0 + 0.03,
-                          box0.y0,
-                          box0.width,
-                          box0.height])
-    box1 = axes[1].get_position()
-    axes[1].set_position([box1.x0 + 0.03,
-                          (box1.y0 + 0.04),
-                          box1.width,
-                          box1.height])
-    fig.legend(handles=(bars_map, bars_reduce),
-               labels=(bars_map.get_label(), bars_reduce.get_label()),
-               ncol=2,
+    box0 = ax[0].get_position()
+    ax[0].set_position([box0.x0 + 0.03,
+                        box0.y0,
+                        box0.width,
+                        box0.height])
+    box1 = ax[1].get_position()
+    ax[1].set_position([box1.x0 + 0.03,
+                        (box1.y0 + 0.04),
+                        box1.width,
+                        box1.height])
+    (handles, labels) = ax[0].get_legend_handles_labels()
+    if not has_2_xypairs:
+        ncol = 1
+    else:
+        ncol = 2
+    fig.legend(handles,
+               labels,
+               ncol=ncol,
                loc='lower center',
                bbox_to_anchor=(0.05, -0.01, 0.9, 1.),
                mode='expand')
@@ -317,34 +117,15 @@ def main(args):
     """
     Read Disco event file and plot performance metrics.
     """
-    # TODO: try, except, move on if fail
-    # events_to_dict(fevents)
-
-    # TODO: try, except, move on if fail
-    # plot(fplot, devents, *dconfig)
-    # allow for metadata to be added to plot (e.g. data size, file name, etc)
-
-    (fconfig_base, ext) = os.path.splitext(args.fconfig)
-    if ext != '.csv':
-        raise IOError(("File extension is not '.csv': {fname}").format(fname=args.fconfig))
-    fconfig_nocmts = fconfig_base + '_temp' + ext
-    with open(args.fconfig, 'r') as fcmts:
-        with open(fconfig_nocmts, 'w') as fnocmts:
-            for line in fcmts:
-                if line.startswith('#'):
-                    continue
-                else:
-                    fnocomts.write(line)
-    dfconfig = pd.read_csv(fconfig_nocmts)
-    fconfigargs.fconfig
 
     plot_args = {}
-    plot_args['suptitle'] = ("Disco, CountWords, 4 nodes, 4 workers\n"
-                             +"exec time vs data set size, no reduce")
+    plot_args['suptitle'] = ("Hadoop, wordcount, 9 nodes\n"
+                             +"exec time vs data set size")
     plot_args['xtitle'] = "Data set size (GB)"
-    plot_args['xvalues'] = [2.97, 10.35, 28.9]
-    plot_args['times_map'] = [6.16, 13.78, 36.04]
-    plot_args['times_reduce'] = [0, 0, 0]
+    plot_args['xvalues'] = [0.94, 2.7, 9.3, 27.9, 93.1, 279.4, 1052.5]
+    # plot_args['times_map'] = [6.16, 13.78, 36.04]
+    # plot_args['times_reduce'] = [0, 0, 0]
+    plot_args['yvalues'] = [1.867, 1.917, 4.517, 9.2, 7.883, 12.3, 68.77]
     plot_args['fplot'] = args.fplot
 
     plot(**plot_args)
@@ -353,14 +134,15 @@ def main(args):
 
 if __name__ == '__main__':
     defaults = {}
-    defaults['fconfig'] = "config.csv"
+    # TODO: use configparser instead
+    # defaults['fconfig'] = "config.csv"
     defaults['fplot'] = "plot.pdf"
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                      description="Read Disco event file and plot performance metrics.")
-    parser.add_argument("--fconfig",
-                        default=defaults['fconfig'],
-                        help=(("Input configuration file as .csv.\n"
-                               +" Default: {default}").format(default=defaults['fconfig'])))
+    # parser.add_argument("--fconfig",
+    #                     default=defaults['fconfig'],
+    #                     help=(("Input configuration file as .csv.\n"
+    #                            +" Default: {default}").format(default=defaults['fconfig'])))
     parser.add_argument("--fplot",
                         default=defaults['fplot'],
                         help=(("Output plot file as pdf.\n"
