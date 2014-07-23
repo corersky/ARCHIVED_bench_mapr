@@ -3,6 +3,26 @@
 Disco-specific utilities.
 """
 
+# TODO: have common module for import
+# TODO: have test module
+
+from __future__ import print_function, division
+import os
+import ast
+import argparse
+import configparser
+import datetime as dt
+
+def duration_to_timedelta(duration):
+    """
+    Convert duration from HH:MM:SS to datetime timedelta object.
+    """
+    duration_arr = map(float, duration.split(':'))
+    duration_td = dt.timedelta(hours=duration_arr[0],
+                               minutes=duration_arr[1],
+                               seconds=duration_arr[2])
+    return duration_td
+
 def events_to_dict(fevents):
     """
     Read Disco events file from map-reduce job. Return as dict.

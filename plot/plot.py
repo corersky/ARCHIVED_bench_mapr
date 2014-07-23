@@ -3,31 +3,45 @@
 Plot elapsed times from map-reduce job.
 """
 
+# TODO: have common module for import
+# TODO: have test module
+
 from __future__ import print_function, division
 import os
 import ast
 import argparse
-import configparser
+import json
 import datetime as dt
 import matplotlib.pyplot as plt
 
-def duration_to_timedelta(duration):
+def create_plot_config(fjson='plot_config.json'):
     """
-    Convert duration from HH:MM:SS to datetime timedelta object.
+    Create default plot configuration file.
     """
-    duration_arr = map(float, duration.split(':'))
-    duration_td = dt.timedelta(hours=duration_arr[0],
-                               minutes=duration_arr[1],
-                               seconds=duration_arr[2])
-    return duration_td
+    setting_value = {}
+    setting_value['fplot']    = 'plot.pdf'
+    setting_value['suptitle'] = ("Platform, job_type, N nodes\n"
+                                 +"exec. time vs data size")
+    setting_value['xtitle']   = "Data size (GB)"
+    setting_value['xvalues']  = [1, 3, 10, 30, 100, 300, 1000]
+    setting_value['ytitle']   = "Elapsed time (min)"
+    setting_value['yvalues']  = [1, 2, 4, 8, 16, 32, 64]
+    # Use binary read-write for cross-platform compatibility.
+    # Use indent for human readability.
+    with open(fjson, 'wb') as fp:
+        json.dump(setting_value, fp, sort_keys=True, indent=4)
 
 # def plot(suptitle, xtitle, xvalues, times_map, times_reduce, fplot):
-def plot(suptitle, xtitle, xvalues, times, fplot):
+def plot(fplot, suptitle, xtitle, xvalues, ytitle, yvalues):
     """
     Plot job execution times.
     """
+    # TODO:
+    #  - if ndim yvalues = 2, make double plots
+    #  - check for labels
     # Check inputs
     num_xvalues = len(xvalues)
+    # TODO: Raise assertion error
     # if len(times_map) != num_xvalues:
     #     raise IOError(("Number of map jobs != number of x-axis values.\n"
     #                    +" xvalues = {xvalues}\n"
@@ -38,11 +52,11 @@ def plot(suptitle, xtitle, xvalues, times, fplot):
     #                    +" xvalues = {xvalues}\n"
     #                    +" times_reduce = {times_reduce}").format(xvalues=xvalues,
     #                                                              times_reduce=times_reduce))
-    if len(times) != num_xvalues:
+    if len(yvalues) != num_xvalues:
         raise IOError(("Number of map jobs != number of x-axis values.\n"
                        +" xvalues = {xvalues}\n"
-                       +" times = {times}").format(xvalues=xvalues,
-                                                           times=times))
+                       +" yvalues = {yvalues}").format(xvalues=xvalues,
+                                                           yvalues=yvalues))
     (fplot_base, ext) = os.path.splitext(fplot)
     if ext != '.pdf':
         raise IOError(("File extension not '.pdf': {fname}").format(fname=fplot))
@@ -53,6 +67,7 @@ def plot(suptitle, xtitle, xvalues, times, fplot):
     (fig, axes) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
     # Add bar charts.
     widths = tuple(s*0.7 for s in xvalues)
+    # TODO: redo with bars side-by-side
     # bars_map = axes[0].bar(left=xvalues,
     #                        height=times_map,
     #                        width=widths,
@@ -65,7 +80,7 @@ def plot(suptitle, xtitle, xvalues, times, fplot):
     #                           bottom=times_map,
     #                           label="Reduce")
     bars = axes[0].bar(left=xvalues,
-                       height=times,
+                       height=yvalues,
                        width=widths,
                        color='r',
                        label="Total")
@@ -81,7 +96,7 @@ def plot(suptitle, xtitle, xvalues, times, fplot):
     #             bottom=times_map,
     #             log=True)
     axes[1].bar(left=xvalues,
-                height=times,
+                height=yvalues,
                 width=widths,
                 color='r',
                 log=True)
@@ -94,7 +109,7 @@ def plot(suptitle, xtitle, xvalues, times, fplot):
              verticalalignment='center')
     fig.text(x=0.04,
              y=0.5,
-             s="Elapsed time (min)",
+             s=ytitle,
              horizontalalignment='center',
              verticalalignment='center',
              rotation='vertical')
@@ -130,21 +145,6 @@ def main(args):
     """
     Read Disco event file and plot performance metrics.
     """
-    # TODO: allow for metadata to be added to plot (e.g. data size, file name, etc)
-    # # TODO: use configparse for config files
-    # (fconfig_base, ext) = os.path.splitext(args.fconfig)
-    # if ext != '.csv':
-    #     raise IOError(("File extension is not '.csv': {fname}").format(fname=args.fconfig))
-    # fconfig_nocmts = fconfig_base + '_temp' + ext
-    # with open(args.fconfig, 'r') as fcmts:
-    #     with open(fconfig_nocmts, 'w') as fnocmts:
-    #         for line in fcmts:
-    #             if line.startswith('#'):
-    #                 continue
-    #             else:
-    #                 fnocomts.write(line)
-    # dfconfig = pd.read_csv(fconfig_nocmts)
-    # fconfigargs.fconfig
 
     plot_args = {}
     plot_args['suptitle'] = ("Hadoop, wordcount, 9 nodes\n"
@@ -153,7 +153,7 @@ def main(args):
     plot_args['xvalues'] = [0.94, 2.7, 9.3, 27.9, 93.1, 279.4, 1052.5]
     # plot_args['times_map'] = [6.16, 13.78, 36.04]
     # plot_args['times_reduce'] = [0, 0, 0]
-    plot_args['times'] = [1.867, 1.917, 4.517, 9.2, 7.883, 12.3, 68.77]
+    plot_args['yvalues'] = [1.867, 1.917, 4.517, 9.2, 7.883, 12.3, 68.77]
     plot_args['fplot'] = args.fplot
 
     plot(**plot_args)
