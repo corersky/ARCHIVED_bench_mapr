@@ -7,10 +7,7 @@ Disco-specific utilities.
 # TODO: have test module
 
 from __future__ import print_function, division
-import os
 import ast
-import argparse
-import configparser
 import datetime as dt
 
 def duration_to_timedelta(duration):

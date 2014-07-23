@@ -3,39 +3,16 @@
 Plot elapsed times from map-reduce job.
 """
 
-# TODO: have common module for import
+# TODO: use event logger to handle info message
 # TODO: have test module
+# TODO: rename module to main, move utilties to utils
 
 from __future__ import print_function, division
 import os
-import ast
 import argparse
 import json
-import datetime as dt
 import matplotlib.pyplot as plt
 
-def create_plot_config(fjson='plot_config.json'):
-    """
-    Create default plot configuration file.
-    """
-    setting_value = {}
-    setting_value['fplot']    = 'plot.pdf'
-    setting_value['suptitle'] = ("Platform, job_type, N nodes\n"
-                                 +"exec. time vs data size")
-    setting_value['xtitle']   = "Data size (GB)"
-    setting_value['ytitle']   = "Elapsed time (min)"
-    setting_value['label1']   = "Map"
-    setting_value['xypairs1'] = [(10,1), (30,2), (100,3), (300,4)]
-    setting_value['label2']   = "Reduce"
-    setting_value['xypairs2'] = [(10,1), (30,2), (100,4), (300,8)]
-    # setting_value['label2']   = None
-    # setting_value['xypairs2'] = None
-    # Use binary read-write for cross-platform compatibility.
-    # Use indent for human readability.
-    with open(fjson, 'wb') as fp:
-        json.dump(setting_value, fp, sort_keys=True, indent=4)
-
-# def plot(suptitle, xtitle, xvalues, times_map, times_reduce, fplot):
 def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
     """
     Plot job execution times.
@@ -43,7 +20,7 @@ def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
     # Check inputs.
     (fplot_base, ext) = os.path.splitext(fplot)
     if ext != '.pdf':
-        raise IOError(("File extension not '.pdf': {fname}").format(fname=fplot))
+        raise IOError(("File extension not '.pdf': {fplot}").format(fplot=fplot))
     # Create figure object.
     subplot_kw = {}
     subplot_kw['xscale'] = 'log'
@@ -56,6 +33,7 @@ def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
         (x2, y2) = zip(*xypairs2)
         has_2_xypairs = True
     else:
+        # TODO: use event logger to handle INFO messages.
         print("INFO: No xypairs2.")
         has_2_xypairs = False
     plt1_kw = {}
@@ -115,41 +93,32 @@ def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
 
 def main(args):
     """
-    Read Disco event file and plot performance metrics.
+    Plot job execution times.
     """
-
-    plot_args = {}
-    plot_args['suptitle'] = ("Hadoop, wordcount, 9 nodes\n"
-                             +"exec time vs data set size")
-    plot_args['xtitle'] = "Data set size (GB)"
-    plot_args['xvalues'] = [0.94, 2.7, 9.3, 27.9, 93.1, 279.4, 1052.5]
-    # plot_args['times_map'] = [6.16, 13.78, 36.04]
-    # plot_args['times_reduce'] = [0, 0, 0]
-    plot_args['yvalues'] = [1.867, 1.917, 4.517, 9.2, 7.883, 12.3, 68.77]
-    plot_args['fplot'] = args.fplot
-
+    with open(args.fconfig, 'rb') as fp:
+        plot_args = json.load(fp)
     plot(**plot_args)
-
     return None
 
 if __name__ == '__main__':
     defaults = {}
-    defaults['fconfig'] = ""
+    defaults['fconfig'] = "plot_config.json"
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                      description="Read Disco event file and plot performance metrics.")
-    # parser.add_argument("--fconfig",
-    #                     default=defaults['fconfig'],
-    #                     help=(("Input configuration file as .csv.\n"
-    #                            +" Default: {default}").format(default=defaults['fconfig'])))
-    parser.add_argument("--fplot",
-                        default=defaults['fplot'],
-                        help=(("Output plot file as pdf.\n"
-                               +" Default: {default}").format(default=defaults['fplot'])))
+    parser.add_argument("--fconfig",
+                        default=defaults['fconfig'],
+                        help=(("Input configuration file as .json.\n"
+                               +" Default: {default}").format(default=defaults['fconfig'])))
     parser.add_argument("--verbose",
                         "-v",
                         action="store_true",
                         help=("Print 'INFO:' messages to stdout."))
     args = parser.parse_args()
+    if not os.path.isfile(args.fconfig):
+        raise IOError(("Configuration file does not exist: {fconfig}").format(fconfig=args.fconfig))
+    (fconfig_base, ext) = os.path.splitext(args.fconfig)
+    if ext != '.json':
+        raise IOError(("Configuration file extension not '.json': {fconfig}").format(fconfig=args.fconfig))
     if args.verbose:
         print("INFO: Arguments:")
         for arg in args.__dict__:
