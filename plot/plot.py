@@ -134,9 +134,7 @@ def main(args):
 
 if __name__ == '__main__':
     defaults = {}
-    # TODO: use configparser instead
-    # defaults['fconfig'] = "config.csv"
-    defaults['fplot'] = "plot.pdf"
+    defaults['fconfig'] = ""
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                      description="Read Disco event file and plot performance metrics.")
     # parser.add_argument("--fconfig",
