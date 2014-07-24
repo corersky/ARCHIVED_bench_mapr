@@ -15,6 +15,8 @@ import pandas as pd
 from subprocess32 import Popen
 from disco.ddfs import DDFS
 
+# TODO: use logging for error messages.
+
 class ErrMsg(object):
     """
     Print custom error messages.
@@ -240,19 +242,27 @@ def main_sets(args):
     - Append data to settag from filetags in DDFS.
     - Note: Must have all 'filetag' loaded.
     """
-    # TODO: Don't load settag if it already exists.
     df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
     bytes_per_gb = 10**9
     filetag_sizegb_map = {}
+    # If it exists, use checked, downloaded data from Disco to verify dataset sizes,
+    # otherwise use decompressed files prior to Disco upload.
+    if args.check_filetags:
+        # idx variables are unused.
+        for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
+            ftag = os.path.join(args.data_dir, filetag+'.txt')
+            ftag_sizegb = os.path.getsize(ftag) / bytes_per_gb
+            filetag_sizegb_map[filetag] = ftag_sizegb
+    else:
+        # idx variables are unused.
+        for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
+            fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
+            fdecom = os.path.splitext(fbz2)[0]
+            fbz2_sizegb = os.path.getsize(fbz2) / bytes_per_gb
+            filetag_sizegb_map[filetag] = fbz2_sizegb
     # Sort filetags by size in descending order.
-    # Use filesize written out by Disco rather than input files due to problems uploading.
-    # idx variables are unused.
-    for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
-        ftag = os.path.join(args.data_dir, filetag+'.txt')
-        ftag_sizegb = os.path.getsize(ftag) / bytes_per_gb
-        filetag_sizegb_map[filetag] = ftag_sizegb
-    filetag_sizegb_sorted = sorted(filetag_sizegb_map.iteritems(), key=operator.itemgetter(1), reverse=True)
     # Add filetags to a dataset as long as they can fit. Nest the data sets.
+    filetag_sizegb_sorted = sorted(filetag_sizegb_map.iteritems(), key=operator.itemgetter(1), reverse=True)
     settag_filetags_map = {}
     is_first = True
     for size in sorted(args.sets_gb):
@@ -278,33 +288,24 @@ def main_sets(args):
         prev_settag = settag
         is_first = False
     # Append data to settag from filetags in DDFS.
+    # TODO: use logging.
     for settag in sorted(settag_filetags_map):
-        if args.verbose >= 1:
-            print(("INFO: Appending data to settag from filetags:\n"
-                   +" {settag}\n"
-                   +" {filetags}").format(settag=settag,
-                                          filetags=settag_filetags_map[settag]))
-        for filetag in settag_filetags_map[settag]:
-            try:
-                filetag_urls = DDFS().urls(filetag)
-                DDFS().tag(settag, filetag_urls)
-            except: ErrMsg().eprint(err=sys.exc_info())
+        if DDFS().exists(tag=settag):
+            if args.verbose >= 2:
+                print(("INFO: Skipping Disco upload."
+                       +" Tag already exists:\n {tag}.").format(tag=settag))
+        else:
+            if args.verbose >= 1:
+                print(("INFO: Appending data to settag from filetags:\n"
+                       +" {settag}\n"
+                       +" {filetags}").format(settag=settag,
+                                              filetags=settag_filetags_map[settag]))
+            for filetag in settag_filetags_map[settag]:
+                try:
+                    filetag_urls = DDFS().urls(filetag)
+                    DDFS().tag(settag, filetag_urls)
+                except: ErrMsg().eprint(err=sys.exc_info())
     return None
-
-def main_hadoop(args):
-    """
-    Load data to Hadoop Distributed File System.
-    """
-    pass
-    # # TODO: resume here
-    # cmds = []
-    # # for all files in df
-    # # if verbose, print
-    # try:
-    #     cmd = ("hadoop fs -put {fname} {ddata}").format(fname=fdecom, ddata=args.data_dir)
-    # hadoop fs -put $f wikimedia_dumps/.
-    # # except error
-    # return None
 
 def main(args):
     """
@@ -324,16 +325,15 @@ def main(args):
     if args.check_filetags:
         main_check_filetags(args)
     # Pack individual files to data sets, if provided.
+    # Use checked filetas if available, otherwise use source files.
     if len(args.sets_gb) > 0:
         main_sets(args)
-    # TODO: Load data into Hadoop Distributed File System.
-    # if args.hadoop:
-    #     main_hadoop(args)
     # At end, report error count.
     if args.verbose >= 1: ErrMsg().esum()
     return None
 
 if __name__ == '__main__':
+    # TODO: use config file instead.
     arg_default_map = {}
     arg_default_map['fcsvs'] = glob.glob(os.path.join(os.getcwd(), '*.csv'))
     arg_default_map['data_dir'] = '/tmp'
