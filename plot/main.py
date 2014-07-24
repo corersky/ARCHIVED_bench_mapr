@@ -26,7 +26,7 @@ if __name__ == '__main__':
     defaults = {}
     defaults['fconfig'] = "plot_config.json"
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
-                                     description="Read Disco event file and plot performance metrics.")
+                                     description="Read configuration file and plot.")
     parser.add_argument("--fconfig",
                         default=defaults['fconfig'],
                         help=(("Input configuration file as .json.\n"
