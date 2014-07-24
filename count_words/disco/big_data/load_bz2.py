@@ -258,8 +258,8 @@ def main_sets(args):
         for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
             fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
             fdecom = os.path.splitext(fbz2)[0]
-            fbz2_sizegb = os.path.getsize(fbz2) / bytes_per_gb
-            filetag_sizegb_map[filetag] = fbz2_sizegb
+            fdecom_sizegb = os.path.getsize(fdecom) / bytes_per_gb
+            filetag_sizegb_map[filetag] = fdecom_sizegb
     # Sort filetags by size in descending order.
     # Add filetags to a dataset as long as they can fit. Nest the data sets.
     filetag_sizegb_sorted = sorted(filetag_sizegb_map.iteritems(), key=operator.itemgetter(1), reverse=True)
