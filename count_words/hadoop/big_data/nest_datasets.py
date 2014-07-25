@@ -16,6 +16,7 @@ def main(args):
     and creating nested datasets.
     """
     # Load files into HDFS directory.
+    # Hadoop will crash if there are too many threads. Do not over parallelize.
     if args.files_in is not None:
         if args.verbose >= 1: print(("INFO: Uploading to HDFS directory from files:\n"
                                      +" {fdir}\n {fins}").format(fdir=args.files_dir, fins=args.files_in))
@@ -23,14 +24,20 @@ def main(args):
         proc = sub.Popen(cmd, shell=True)
         proc.wait()
     # Create nested datasets from files in HDFS directory.
+    # Note: Hadoop Filesystem uses gibibytes (1024^3 bytes), not gigabytes (1000^3 bytes).
+    # Create data sets in gigabytes.
     bytes_per_gb = 10**9
     if args.sets_gb is not None:
         # Get file sizes and sort in descending order.
         cmd = ("hadoop fs -du {fdir}").format(fdir=args.files_dir)
         output = sub.check_output(cmd, shell=True)
-        hfile_sizegb_map = dict([
-                (hfile, int(size)/bytes_per_gb) for (size, hfile) in [
-                    line.split() for line in output.splitlines()]])
+        inbases = [os.path.basename(fpath) for fpath in args.files_in]
+        hfile_sizegb_map = {}
+        for line in output.splitlines():
+            size, hfile = line.split()
+            hbase = os.path.basename(hfile)
+            if hbase in inbases:
+                hfile_sizegb_map[hfile] = int(size) / bytes_per_gb
         hfile_sizegb_sorted = sorted(hfile_sizegb_map.iteritems(), key=operator.itemgetter(1), reverse=True)
         # Add files to a dataset as long as they can fit and are not already included.
         hset_hfiles_map = {}
