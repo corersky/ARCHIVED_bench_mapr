@@ -47,7 +47,7 @@ def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
         plt2_kw = {}
         plt2_kw['color'] = 'green'
         plt2_kw['linestyle'] = '-'
-        plt2_kw['marker'] = 'o'
+        plt2_kw['marker'] = 's'
         plt2_kw['label'] = label2
         ax[0].semilogx(x2, y2, **plt2_kw)
         ax[1].loglog(x2, y2, **plt2_kw)
