@@ -8,16 +8,15 @@ import sys
 
 def main(stdin):
     """
-    Read in line. Parse into list of words.
+    Print lines from standard in.
+    Value is just a place holder.
     """
-    print(().format())
-    with open(f, 'r') as f_in:
-        lines = [line for line in f_in]
-
-    with open(file_out, 'w') as f_out:
-        for string in sorted(lines):
-            f_out.write(string)
-
+    for line in stdin:
+        # Remove trailing newlines.
+        line = line.rstrip()
+        # Omit empty lines.
+        if line != '':
+            print(("{line}\t{num}").format(line=line, num=1))
     return None
 
 if __name__ == '__main__':

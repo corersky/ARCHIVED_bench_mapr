@@ -1,39 +1,27 @@
 #!/usr/bin/env python
 """
-Sort a .txt file without map-reduce and output to a .txt file 
-to check the map-reduce implentation.
+Reducer for sort with Hadoop streaming.
 """
 
 from __future__ import print_function
-import argparse
+import sys
 
-def main(file_in, file_out):
+def main(stdin):
     """
-    Read in lines, sort lines, write out sorted lines.
+    Sort standard input and return sorted lines.
+    Value is just a place holder.
     """
-
-    with open(file_in, 'r') as f_in:
-        lines = [line for line in f_in]
-
-    with open(file_out, 'w') as f_out:
-        for string in sorted(lines):
-            f_out.write(string)
-
+    for line_num in sorted(stdin):
+        # Remove trailing newlines.
+        line_num = line_num.rstrip()
+        # Sort only lines containing text.
+        # Omit empty lines containing only newlines.
+        try:
+            (line, num) = line_num.rsplit('\t', 1)
+            print(("{line}\t{num}").format(line=line, num=num))
+        except ValueError:
+            pass
     return None
 
 if __name__ == '__main__':
-
-    file_in_default = "input.txt"
-    file_out_default = "output.txt"
-
-    parser = argparse.ArgumentParser(description="Sort a file without map-reduce.")
-    parser.add_argument("--file_in",
-                        default=file_in_default,
-                        help="Input file. Default: {default}".format(default=file_in_default))
-    parser.add_argument("--file_out",
-                        default=file_out_default,
-                        help="Output file. Default: {default}".format(default=file_out_default))
-    args = parser.parse_args()
-    print(args)
-
-    main(file_in=args.file_in, file_out=args.file_out)
+    main(stdin=sys.stdin)
