@@ -10,8 +10,8 @@ def main(stdin):
     """
     Read in line. Parse into list of words.
     """
-
-    with open(file_in, 'r') as f_in:
+    print(().format())
+    with open(f, 'r') as f_in:
         lines = [line for line in f_in]
 
     with open(file_out, 'w') as f_out:
