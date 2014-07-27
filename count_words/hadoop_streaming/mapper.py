@@ -9,14 +9,12 @@ import sys
 def main(stdin):
     """
     Read in line. Parse line into list of words.
-    Sort and tally words. Print tallies.
+    Print word as a single count.
     """
     for line in stdin:
         words = line.split()
-        counts = map(words.count, words)
-        tallies = sorted(set(zip(words, counts)))
-        for (word, count) in tallies:
-            print(("{word}\t{count}").format(word=word, count=count))
+        for word in words:
+            print(("{word}\t{count}").format(word=word, count=1))
     return None
 
 if __name__ == '__main__':
