@@ -8,7 +8,7 @@ import sys
 
 def main(stdin):
     """
-    Aggregate the wordcount tallies.
+    Aggregate the wordcount pairs.
     """
     (word, count) = (None, 0)
     for line in stdin:
