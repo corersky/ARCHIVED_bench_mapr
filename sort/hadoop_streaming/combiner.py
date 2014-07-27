@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Reducer for sort with Hadoop streaming.
+Combiner for sort with Hadoop streaming.
 """
 
 from __future__ import print_function
@@ -8,10 +8,10 @@ import sys
 
 def main(stdin):
     """
-    Take sorted standard in from Hadoop and return lines.
+    Take unsorted standard input from mapper and return sorted block.
     Value is just a place holder.
     """
-    for line_num in stdin:
+    for line_num in sorted(stdin):
         # Remove trailing newlines.
         line_num = line_num.rstrip()
         # Omit empty lines.
