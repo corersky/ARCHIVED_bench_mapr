@@ -13,6 +13,7 @@ def main(stdin):
     (word, count) = (None, 0)
     for line in stdin:
         (new_word, new_count) = line.split()
+        new_count = int(new_count)
         # If we've seen this word before, continue tally,...
         if new_word == word:
             count += new_count
