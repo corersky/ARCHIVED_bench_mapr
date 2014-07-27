@@ -1,49 +1,33 @@
 #!/usr/bin/env python
 """
-Count words without map-reduce from a .txt file and output to .csv
-as check for map-reduce implentation.
+Reducer for count words with Hadoop streaming.
 """
 
 from __future__ import print_function
-import argparse
-import csv
+import sys
 
-def main(file_in, file_out):
+def main(stdin):
     """
-    Read in lines, flatten list of lines to list of words,
-    sort and tally words, write out tallies.
+    Aggregate the wordcount tallies.
     """
-
-    with open(file_in, 'r') as f_in:
-        word_lists = [line.split() for line in f_in]
-
-    # Flatten the list
-    # http://stackoverflow.com/questions/952914/\
-    # making-a-flat-list-out-of-list-of-lists-in-python
-    words = [word for word_list in word_lists for word in word_list]
-    counts = map(words.count, words)
-    tallies = sorted(set(zip(words, counts)))
-
-    with open(file_out, 'w') as f_out:
-        writer = csv.writer(f_out, quoting=csv.QUOTE_NONNUMERIC)
-        for (word, count) in tallies:
-            writer.writerow([word, count])
-
+    (word, count) = (None, 0)
+    for line in stdin:
+        (new_word, new_count) = line.split()
+        # If we've seen this word before, continue tally,...
+        if new_word == word:
+            count += new_count
+        # ...otherwise...
+        else:
+            # ...print the current tally if not at start...
+            if word != None:
+                print(("{word}\t{count}").format(word=word, count=count))
+            # ...and reset the tally.
+            count = new_count
+        # Track the last word seen.
+        word = new_word
+    # At end, print the last tally.
+    print(("{word}\t{count}").format(word=word, count=count))
     return None
 
 if __name__ == '__main__':
-    
-    file_in_default = "input.txt"
-    file_out_default = "output.csv"
-
-    parser = argparse.ArgumentParser(description="Count words in a file without map-reduce.")
-    parser.add_argument("--file_in",
-                        default=file_in_default,
-                        help="Input file. Default: {default}".format(default=file_in_default))
-    parser.add_argument("--file_out",
-                        default=file_out_default,
-                        help="Output file. Default: {default}".format(default=file_out_default))
-    args = parser.parse_args()
-    print(args)
-    
-    main(file_in=args.file_in, file_out=args.file_out)
+    main(stdin=sys.stdin)
