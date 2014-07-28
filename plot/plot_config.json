@@ -1,8 +1,9 @@
 {
     "fplot": "plot.pdf", 
     "label1": "Map", 
-    "label2": null, 
+    "label2": "Reduce", 
     "suptitle": "Platform, job_type, N nodes\nexec. time vs data size", 
+    "xdivide": 1, 
     "xtitle": "Data size (GB)", 
     "xypairs1": [
         [
@@ -22,6 +23,24 @@
             4
         ]
     ], 
-    "xypairs2": null, 
+    "xypairs2": [
+        [
+            10, 
+            1
+        ], 
+        [
+            30, 
+            2
+        ], 
+        [
+            100, 
+            4
+        ], 
+        [
+            300, 
+            8
+        ]
+    ], 
+    "ydivide": 1, 
     "ytitle": "Elapsed time (min)"
 }

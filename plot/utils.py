@@ -13,7 +13,12 @@ import json
 import matplotlib.pyplot as plt
 import datetime as dt
 
-def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
+def plot(fplot='plot.pdf',
+         suptitle='suptitle',
+         xtitle='xtitle', ytitle='ytitle',
+         label1='label1', xypairs1=[(10,1), (30,2), (100,3), (300,4)],
+         label2='label2', xypairs2=[(10,1), (30,2), (100,4), (300,8)],
+         xdivide=1, ydivide=1):
     """
     Plot job execution times.
     """
@@ -28,9 +33,9 @@ def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
     fig_kw['figsize'] = (4., 6.)
     (fig, ax) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
     # Plot data.
-    (x1, y1) = zip(*xypairs1)
+    (x1, y1) = [(x/xdivide, y/ydivide) for (x, y) in zip(*xypairs1)]
     if xypairs2 != None:
-        (x2, y2) = zip(*xypairs2)
+        (x2, y2) = [(x/xdivide, y/ydivide) for (x, y) in zip(*xypairs2)]
         has_2_xypairs = True
     else:
         # TODO: use event logger to handle INFO messages.
@@ -85,7 +90,7 @@ def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
                labels,
                ncol=ncol,
                loc='lower center',
-               bbox_to_anchor=(0.05, -0.01, 0.9, 1.),
+               bbox_to_anchor=(0.13, -0.01, 0.82, 1.0),
                mode='expand')
     # Save figure as .pdf.
     fig.savefig(fplot)
@@ -93,7 +98,7 @@ def plot(fplot, suptitle, xtitle, ytitle, label1, xypairs1, label2, xypairs2):
 
 def create_plot_config(fjson='plot_config.json'):
     """
-    Create default plot configuration file.
+    Create plot configuration file.
     """
     setting_value = {}
     setting_value['fplot']    = 'plot.pdf'
@@ -105,12 +110,15 @@ def create_plot_config(fjson='plot_config.json'):
     setting_value['xypairs1'] = [(10,1), (30,2), (100,3), (300,4)]
     setting_value['label2']   = "Reduce"
     setting_value['xypairs2'] = [(10,1), (30,2), (100,4), (300,8)]
+    setting_value['xdivide']  = 1
+    setting_value['ydivide']  = 1
     # setting_value['label2']   = None
     # setting_value['xypairs2'] = None
     # Use binary read-write for cross-platform compatibility.
     # Use indent for human readability.
     with open(fjson, 'wb') as fp:
         json.dump(setting_value, fp, sort_keys=True, indent=4)
+    return None
 
 def duration_to_timedelta(duration):
     """
