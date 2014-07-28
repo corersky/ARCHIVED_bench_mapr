@@ -10,10 +10,14 @@ from __future__ import print_function, division
 import os
 import ast
 import json
-import matplotlib.pyplot as plt
+import collections
 import datetime as dt
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 def plot(fplot='plot.pdf',
+         infodict={},
+         comments=[],
          suptitle='suptitle',
          xtitle='xtitle', ytitle='ytitle',
          label1='label1', xypairs1=[(10,1), (30,2), (100,3), (300,4)],
@@ -22,10 +26,20 @@ def plot(fplot='plot.pdf',
     """
     Plot job execution times.
     """
-    # Check inputs.
+    # Check inputs, open PDF file, and print/save metadata.
     (fplot_base, ext) = os.path.splitext(fplot)
     if ext != '.pdf':
         raise IOError(("File extension not '.pdf': {fplot}").format(fplot=fplot))
+    print(("INFO: Creating plot:\n"+
+           "{fplot}").format(fplot=fplot))
+    pdf = PdfPages(fplot)
+    if comments != []:
+        print("INFO: Comments:")
+        print("\n".join(comments))
+    pdf_infodict = pdf.infodict()
+    if infodict != {}:
+        for key in infodict:
+            pdf_infodict[key] = infodict[key]
     # Create figure object.
     subplot_kw = {}
     subplot_kw['xscale'] = 'log'
@@ -33,9 +47,9 @@ def plot(fplot='plot.pdf',
     fig_kw['figsize'] = (4., 6.)
     (fig, ax) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
     # Plot data.
-    (x1, y1) = [(x/xdivide, y/ydivide) for (x, y) in zip(*xypairs1)]
+    (x1, y1) = zip(*[(x/xdivide, y/ydivide) for (x, y) in xypairs1])
     if xypairs2 != None:
-        (x2, y2) = [(x/xdivide, y/ydivide) for (x, y) in zip(*xypairs2)]
+        (x2, y2) = zip(*[(x/xdivide, y/ydivide) for (x, y) in xypairs2])
         has_2_xypairs = True
     else:
         # TODO: use event logger to handle INFO messages.
@@ -92,32 +106,40 @@ def plot(fplot='plot.pdf',
                loc='lower center',
                bbox_to_anchor=(0.13, -0.01, 0.82, 1.0),
                mode='expand')
-    # Save figure as .pdf.
-    fig.savefig(fplot)
+    # Save figure and close PDF file.
+    pdf.savefig()
+    pdf.close()
     return None
 
 def create_plot_config(fjson='plot_config.json'):
     """
     Create plot configuration file.
     """
-    setting_value = {}
-    setting_value['fplot']    = 'plot.pdf'
-    setting_value['suptitle'] = ("Platform, job_type, N nodes\n"
+    setting_value = collections.OrderedDict()
+    setting_value['fplot']     = 'plot.pdf'
+    setting_value['infodict']  = collections.OrderedDict()
+    setting_value['infodict']['Title']    = "PDF title"
+    setting_value['infodict']['Author']   = "PDF author"
+    setting_value['infodict']['Subject']  = "PDF subject"
+    setting_value['infodict']['Keywords'] = "PDF keywords"
+    setting_value['comments']  = ["Insert multiline",
+                                  "comments here."]
+    setting_value['suptitle']  = ("Platform, job_type, N nodes\n"
                                  +"exec. time vs data size")
-    setting_value['xtitle']   = "Data size (GB)"
-    setting_value['ytitle']   = "Elapsed time (min)"
-    setting_value['label1']   = "Map"
-    setting_value['xypairs1'] = [(10,1), (30,2), (100,3), (300,4)]
-    setting_value['label2']   = "Reduce"
-    setting_value['xypairs2'] = [(10,1), (30,2), (100,4), (300,8)]
-    setting_value['xdivide']  = 1
-    setting_value['ydivide']  = 1
-    # setting_value['label2']   = None
-    # setting_value['xypairs2'] = None
+    setting_value['xtitle']    = "Data size (GB)"
+    setting_value['ytitle']    = "Elapsed time (min)"
+    setting_value['label1']    = "Map"
+    setting_value['xypairs1']  = [(10,1), (30,2), (100,3), (300,4)]
+    setting_value['label2']    = "Reduce"
+    setting_value['xypairs2']  = [(10,1), (30,2), (100,4), (300,8)]
+    # setting_value['label2']    = None
+    # setting_value['xypairs2']  = None
+    setting_value['xdivide']   = 1
+    setting_value['ydivide']   = 1
     # Use binary read-write for cross-platform compatibility.
     # Use indent for human readability.
     with open(fjson, 'wb') as fp:
-        json.dump(setting_value, fp, sort_keys=True, indent=4)
+        json.dump(setting_value, fp, sort_keys=False, indent=4)
     return None
 
 def duration_to_timedelta(duration):
