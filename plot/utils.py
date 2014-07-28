@@ -30,16 +30,19 @@ def plot(fplot='plot.pdf',
     (fplot_base, ext) = os.path.splitext(fplot)
     if ext != '.pdf':
         raise IOError(("File extension not '.pdf': {fplot}").format(fplot=fplot))
-    print(("INFO: Creating plot:\n"+
-           "{fplot}").format(fplot=fplot))
+    print(("INFO: Writing plot:\n"+
+           "  {fplot}").format(fplot=fplot))
     pdf = PdfPages(fplot)
-    if comments != []:
-        print("INFO: Comments:")
-        print("\n".join(comments))
     pdf_infodict = pdf.infodict()
     if infodict != {}:
         for key in infodict:
             pdf_infodict[key] = infodict[key]
+    if comments != []:
+        fcomm = fplot_base+"_comments.txt"
+        print(("INFO: Writing comments:\n"+
+               "  {fcomm}").format(fcomm=fcomm))
+        with open(fcomm, 'wb') as fp:
+            fp.write(("\n".join(comments))+"\n")
     # Create figure object.
     subplot_kw = {}
     subplot_kw['xscale'] = 'log'
@@ -70,42 +73,49 @@ def plot(fplot='plot.pdf',
         plt2_kw['label'] = label2
         ax[0].semilogx(x2, y2, **plt2_kw)
         ax[1].loglog(x2, y2, **plt2_kw)
-    # Set figure text.
-    fig.suptitle(suptitle)
-    fig.text(x=0.5,
-             y=0.085,
-             s=xtitle,
-             horizontalalignment='center',
-             verticalalignment='center')
-    fig.text(x=0.04,
-             y=0.5,
-             s=ytitle,
-             horizontalalignment='center',
-             verticalalignment='center',
-             rotation='vertical')
-    # Shift lower plot up to make room for legend at bottom.
+    # Scale plot heights and shift lower plot up to make room for legend at bottom.
+    # Reference corner for positions is lower right. Position tuples: (left, bottom, width, height)
     # Add metadata to legend labels.
     box0 = ax[0].get_position()
-    ax[0].set_position([box0.x0 + 0.03,
-                        box0.y0,
-                        box0.width,
-                        box0.height])
+    wscale  = 1
+    vscale  = 0.95
+    xoffset = 0.03
+    yoffset = (1-vscale)*box0.height
+    ygap    = 0.04
+    ax[0].set_position([box0.x0 + xoffset,
+                        box0.y0 + yoffset,
+                        wscale*box0.width,
+                        vscale*box0.height])
     box1 = ax[1].get_position()
-    ax[1].set_position([box1.x0 + 0.03,
-                        (box1.y0 + 0.04),
-                        box1.width,
-                        box1.height])
+    ax[1].set_position([box1.x0 + xoffset,
+                        box1.y0 + ygap + 2*yoffset,
+                        wscale*box1.width,
+                        vscale*box1.height])
+    # Set figure titles and legend.
+    # Reference corner for positions is lower right. Position tuples: (left, bottom, width, height)
+    fig_suptitle = fig.suptitle(suptitle)
+    fig_xtitle = fig.text(x=0.5,
+                          y= 2*ygap + 2*(1-vscale)*box1.height,
+                          s=xtitle,
+                          horizontalalignment='center',
+                          verticalalignment='center')
+    fig_ytitle = fig.text(x=xoffset,
+                          y=0.5,
+                          s=ytitle,
+                          horizontalalignment='center',
+                          verticalalignment='center',
+                          rotation='vertical')
     (handles, labels) = ax[0].get_legend_handles_labels()
-    if not has_2_xypairs:
-        ncol = 1
-    else:
-        ncol = 2
     fig.legend(handles,
                labels,
-               ncol=ncol,
                loc='lower center',
-               bbox_to_anchor=(0.13, -0.01, 0.82, 1.0),
-               mode='expand')
+               bbox_to_anchor=(0.1 + xoffset,
+                               -0.005,
+                               # -0.06 + 3*(1-vscale)*box1.height,
+                               0.825,
+                               1.00),
+               mode='expand',
+               fontsize=fig_xtitle.get_fontsize())
     # Save figure and close PDF file.
     pdf.savefig()
     pdf.close()
