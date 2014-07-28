@@ -20,12 +20,13 @@ def plot(fplot='plot.pdf',
          comments=[],
          suptitle='suptitle',
          xtitle='xtitle', ytitle='ytitle',
-         label1='label1', xypairs1=[(10,1), (30,2), (100,3), (300,4)],
-         label2='label2', xypairs2=[(10,1), (30,2), (100,4), (300,8)],
+         label1='label1', xypairs1=[(10,1), (30,2), (100,3), (300,4)], xyantn1=[1, 3, 9, 27],
+         label2='label2', xypairs2=[(10,1), (30,2), (100,4), (300,8)], xyantn2=[1, 1, 1, 1],
          xdivide=1, ydivide=1):
     """
     Plot job execution times.
     """
+    # TODO: combine labels, xypairs, xyannotations into dataframe and reference by df_label.
     # Check inputs, open PDF file, and print/save metadata.
     (fplot_base, ext) = os.path.splitext(fplot)
     if ext != '.pdf':
@@ -49,15 +50,8 @@ def plot(fplot='plot.pdf',
     fig_kw = {}
     fig_kw['figsize'] = (4., 6.)
     (fig, ax) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
-    # Plot data.
+    # Plot data and annotations.
     (x1, y1) = zip(*[(x/xdivide, y/ydivide) for (x, y) in xypairs1])
-    if xypairs2 != None:
-        (x2, y2) = zip(*[(x/xdivide, y/ydivide) for (x, y) in xypairs2])
-        has_2_xypairs = True
-    else:
-        # TODO: use event logger to handle INFO messages.
-        print("INFO: No xypairs2.")
-        has_2_xypairs = False
     plt1_kw = {}
     plt1_kw['color'] = 'blue'
     plt1_kw['linestyle'] = '-'
@@ -65,7 +59,13 @@ def plot(fplot='plot.pdf',
     plt1_kw['label'] = label1
     ax[0].semilogx(x1, y1, **plt1_kw)
     ax[1].loglog(x1, y1, **plt1_kw)
-    if has_2_xypairs:
+    xypairs1 = zip(x1, y1)
+    for a in ax:
+        for idx in xrange(len(xyantn1)):
+            a.annotate(xyantn1[idx], xy=xypairs1[idx], xycoords='data',
+                       xytext=(+0, +0), textcoords='offset points')
+    if xypairs2 != None:
+        (x2, y2) = zip(*[(x/xdivide, y/ydivide) for (x, y) in xypairs2])
         plt2_kw = {}
         plt2_kw['color'] = 'green'
         plt2_kw['linestyle'] = '-'
@@ -73,6 +73,14 @@ def plot(fplot='plot.pdf',
         plt2_kw['label'] = label2
         ax[0].semilogx(x2, y2, **plt2_kw)
         ax[1].loglog(x2, y2, **plt2_kw)
+        xypairs2 = zip(x2, y2)
+        for a in ax:
+            for idx in xrange(len(xyantn2)):
+                a.annotate(xyantn2[idx], xy=xypairs2[idx], xycoords='data',
+                           xytext=(+0, -12), textcoords='offset points')
+    else:
+        # TODO: use event logger to handle INFO messages.
+        print("INFO: No xypairs2.")
     # Scale plot heights and shift lower plot up to make room for legend at bottom.
     # Reference corner for positions is lower right. Position tuples: (left, bottom, width, height)
     # Add metadata to legend labels.
@@ -138,12 +146,15 @@ def create_plot_config(fjson='plot_config.json'):
                                  +"exec. time vs data size")
     setting_value['xtitle']    = "Data size (GB)"
     setting_value['ytitle']    = "Elapsed time (min)"
-    setting_value['label1']    = "Map"
+    setting_value['label1']    = "Map (num)"
     setting_value['xypairs1']  = [(10,1), (30,2), (100,3), (300,4)]
-    setting_value['label2']    = "Reduce"
+    setting_value['xyantn1']   = ["m1", "m3", "m9", "m27"]
+    setting_value['label2']    = "Reduce (num)"
     setting_value['xypairs2']  = [(10,1), (30,2), (100,4), (300,8)]
+    setting_value['xyantn2']   = ["r1", "r1", "r1", "r1"]
     # setting_value['label2']    = None
     # setting_value['xypairs2']  = None
+    # setting_value['xyantn2']   = None
     setting_value['xdivide']   = 1
     setting_value['ydivide']   = 1
     # Use binary read-write for cross-platform compatibility.

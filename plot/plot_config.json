@@ -13,7 +13,7 @@
     "suptitle": "Platform, job_type, N nodes\nexec. time vs data size", 
     "xtitle": "Data size (GB)", 
     "ytitle": "Elapsed time (min)", 
-    "label1": "Map", 
+    "label1": "Map (num)", 
     "xypairs1": [
         [
             10, 
@@ -32,7 +32,13 @@
             4
         ]
     ], 
-    "label2": "Reduce", 
+    "xyantn1": [
+        "m1", 
+        "m3", 
+        "m9", 
+        "m27"
+    ], 
+    "label2": "Reduce (num)", 
     "xypairs2": [
         [
             10, 
@@ -50,6 +56,12 @@
             300, 
             8
         ]
+    ], 
+    "xyantn2": [
+        "r1", 
+        "r1", 
+        "r1", 
+        "r1"
     ], 
     "xdivide": 1, 
     "ydivide": 1
