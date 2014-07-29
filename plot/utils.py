@@ -235,32 +235,40 @@ def hadoop_log_to_dict(flog):
         job_completed = False
         for line in fp:
             line = line.strip()
-            print("test:")
+            # TEST:
             print(line)
             # No job is started...
             if ((job_started == False) and
                 (job_completed == False)):
+                # TEST
+                print("TEST: job started and completed both false")
                 # Retain only 'INFO' messages...
                 if 'INFO' in line:
+                    # TEST
+                    print("TEST: info in line")
                     # Hadoop log records will have only 4 fields: date, time, level, message...
                     arr = line.strip().split(' ', 3)
                     if len(arr) == 4:
-                        # A new job has started...
-                        if 'mapreduce.Job: Running job:' in arr[3]:
-                            # Parse the timestamp...
-                            try:
-                                dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
+                        # test
+                        print("TEST: len is 4")
+                        # Parse the timestamp...
+                        try:
+                            dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
+                            # A new job has started...
+                            if 'mapreduce.Job: Running job:' in arr[3]:
                                 job_id = arr[3].rsplit(' ', 1)[-1]
                                 log[job_id] = {}
                                 log[job_id]['progress'] = {}
                                 log[job_id]['summary'] = {}
+                                # test
+                                print("TEST: ",log)
                                 job_started = True
                                 continue
-                            # otherwise ignore lines without timestamps.
-                            except ValueError:
+                            # otherwise ignore Hadoop startup messages.
+                            else:
                                 continue
-                        # otherwise ignore Hadoop startup messages.
-                        else:
+                        # otherwise ignore lines without timestamps.
+                        except ValueError:
                             continue
                     # otherwise ignore lines without 4 fields.
                     else:
@@ -305,11 +313,12 @@ def hadoop_log_to_dict(flog):
             # otherwise job has just completed.
             elif ((job_started == True) and
                   (job_completed == True)):
+                print(log)
                 # parse = statements
-                # Reset job tracking variables.
-                job_started = False
-                job_id = None
-                job_completed = False
+                # # Reset job tracking variables.
+                # job_started = False
+                # job_id = None
+                # job_completed = False
                 continue
             # otherwise there was an error.
             else:
