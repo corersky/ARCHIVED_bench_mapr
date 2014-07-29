@@ -233,6 +233,7 @@ def hadoop_log_to_dict(flog):
         job_started = False
         job_id = None
         job_completed = False
+        last_summary_key = 'Bytes Written'
         for line in fp:
             line = line.strip()
             # TEST:
@@ -324,28 +325,45 @@ def hadoop_log_to_dict(flog):
             # otherwise job has just completed.
             elif ((job_started == True) and
                   (job_completed == True)):
-                print(log)
-                # parse = statements
-                # # Reset job tracking variables.
-                # job_started = False
-                # job_id = None
-                # job_completed = False
-                continue
+                # TEST
+                print("TEST: job started, job completed")
+                # Retain only job summary, non-'INFO' messages...
+                if 'INFO' not in line:
+                    # TEST
+                    print("TEST: info not in line")
+                    # Summary headers don't contain '=' signs...
+                    if '=' not in line:
+                        # test
+                        print("TEST: = not in line")
+                        header = line
+                        log[job_id]['summary'][header] = {}
+                        # test
+                        print("TEST: ", header)
+                    # otherwise if not the last key, use as a key for summary dict if not the last key...
+                    elif last_summary_key not in line:
+                        # test
+                        print("TEST: = in line, not last key")
+                        (key, value) = line.split('=')
+                        log[job_id]['summary'][key] = int(value)
+                        # test
+                        print("TEST: ", key, value)
+                    # otherwise is the last key.
+                    else:
+                        # test
+                        print("TEST: = in line, is last key")
+                        (key, value) = line.split('=')
+                        log[job_id]['summary'][key] = int(value)
+                        # Reset job tracking variables.
+                        job_started = False
+                        job_id = None
+                        job_completed = False
+                # otherwise ignore remaining 'INFO' messages.
+                else:
+                    continue
             # otherwise there was an error.
             else:
                 raise AssertionError(("Hadoop job may have failed. Check log manually."))
-                
-                
-        ## if the line's first 2 elements dont make a datetime, ignore
-        ## if they do, parse into datetime, level, message
-        ##     if INFO message contains "mapreduce.Job: Running job:" save job_id, job_started=True
-        ##         if INFO message contains "mapreduce.Job: map",
-        ##             save dict[progress][datetime]=[(key1, field1), ...]
-        #         if INFO message contains "mapreduce.Job: Counters":
-        #             if 'File System Counters', 'Job Counters', 'Map-Reduce Framework', 'Shuffle Errors',
-        #                 'File Input Format Counters', File Output Format Counters' then dict['File...']
-        #                 split on '=', else job_completed=True
-    return None
+    return log
 
 def dict_to_class(dobj):
     """
