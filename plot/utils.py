@@ -234,54 +234,72 @@ def hadoop_log_to_dict(flog):
         job_id = None
         job_completed = False
         for line in fp:
-            arr = line.strip().split(' ', 3)
+            line = line.strip()
             print("test:")
-            print(arr)
-            # No job has yet been started...
+            print(line)
+            # No job is started...
             if ((job_started == False) and
                 (job_completed == False)):
-                # Hadoop log records will have only 4 fields: date, time, level, message...
-                if len(arr) == 4:
-                    # Parse the timestamp...
-                    try:
-                        dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
-                        # Retain only 'INFO' messages...
-                        if arr[2] == 'INFO':
-                            # A new job has started...
-                            if 'mapreduce.Job: Running job:' in arr[3]:
-                                job_started = True
+                # Retain only 'INFO' messages...
+                if 'INFO' in line:
+                    # Hadoop log records will have only 4 fields: date, time, level, message...
+                    arr = line.strip().split(' ', 3)
+                    if len(arr) == 4:
+                        # A new job has started...
+                        if 'mapreduce.Job: Running job:' in arr[3]:
+                            # Parse the timestamp...
+                            try:
+                                dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
                                 job_id = arr[3].rsplit(' ', 1)[-1]
                                 log[job_id] = {}
                                 log[job_id]['progress'] = {}
                                 log[job_id]['summary'] = {}
+                                job_started = True
                                 continue
-                            # otherwise ignore Hadoop startup messages.
-                            else:
+                            # otherwise ignore lines without timestamps.
+                            except ValueError:
                                 continue
-                        # otherwise ignore non-'INFO' messages.
+                        # otherwise ignore Hadoop startup messages.
                         else:
                             continue
-                    # otherwise ignore lines without timestamps.
-                    except ValueError:
+                    # otherwise ignore lines without 4 fields.
+                    else:
                         continue
-                # otherwise ignore lines without 4 fields.
+                # otherwise ignore non-'INFO' messages.
                 else:
                     continue
             # otherwise job is in progress...
             elif ((job_started == True) and
                   (job_completed == False)):
-                # Progress on a current job...
-                if 'mapreduce.Job:  map' in arr[3]:
-                    progress = arr[3].split()[1:]
-                    progress = [tuple(progress[idx: idx+2]) for idx in xrange(0, len(progress), 2)]
-                    progress = [(task, float(pct.strip('%'))/100) for (task, pct) in progress]
-                    log[job_id]['progress'][dt_event] = progress
-                    continue
-                # otherwise job is complete or...
-                elif arr[3] == 'mapreduce.Job: '+job_id+' completed successfully':
-                    job_completed = True
-                    continue
-                # otherwise ignore as job may have failed.
+                # Retain only 'INFO' messages...
+                if 'INFO' in line:
+                    # Hadoop log records will have only 4 fields: date, time, level, message...
+                    arr = line.strip().split(' ', 3)
+                    if len(arr) == 4:
+                        # Parse the timestamp...
+                        try:
+                            dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
+                            # Progress on a current job...
+                            if 'mapreduce.Job:  map' in arr[3]:
+                                progress = arr[3].split()[1:]
+                                progress = [tuple(progress[idx: idx+2]) for idx in xrange(0, len(progress), 2)]
+                                progress = [(task, float(pct.strip('%'))/100) for (task, pct) in progress]
+                                log[job_id]['progress'][dt_event] = progress
+                                continue
+                            # otherwise job is complete...
+                            elif arr[3] == 'mapreduce.Job: '+job_id+' completed successfully':
+                                job_completed = True
+                                continue
+                            # otherwise ignore other messages.
+                            else:
+                                continue
+                        # otherwise ignore lines without timestamps.
+                        except ValueError:
+                            continue
+                    # otherwise ignore lines without 4 fields.
+                    else:
+                        continue
+                # otherwise ignore non-'INFO' messages.
                 else:
                     continue
             # otherwise job has just completed.
@@ -293,9 +311,9 @@ def hadoop_log_to_dict(flog):
                 job_id = None
                 job_completed = False
                 continue
-            # otherwise there is a programming error.
+            # otherwise there was an error.
             else:
-                raise AssertionError(("Invalid case for job status."))
+                raise AssertionError(("Hadoop job may have failed. Check log manually."))
                 
                 
         ## if the line's first 2 elements dont make a datetime, ignore
