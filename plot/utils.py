@@ -236,22 +236,14 @@ def hadoop_log_to_dict(flog):
         last_summary_key = 'Bytes Written'
         for line in fp:
             line = line.strip()
-            # TEST:
-            print(line)
             # No job is started...
             if ((job_started == False) and
                 (job_completed == False)):
-                # TEST
-                print("TEST: job started and completed both false")
                 # Retain only 'INFO' messages...
                 if 'INFO' in line:
-                    # TEST
-                    print("TEST: info in line")
                     # Hadoop log records will have only 4 fields: date, time, level, message...
                     arr = line.strip().split(' ', 3)
                     if len(arr) == 4:
-                        # test
-                        print("TEST: len is 4")
                         # Parse the timestamp...
                         try:
                             dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
@@ -261,8 +253,6 @@ def hadoop_log_to_dict(flog):
                                 log[job_id] = {}
                                 log[job_id]['progress'] = {}
                                 log[job_id]['summary'] = {}
-                                # test
-                                print("TEST: ",log)
                                 job_started = True
                                 continue
                             # otherwise ignore Hadoop startup messages.
@@ -280,17 +270,11 @@ def hadoop_log_to_dict(flog):
             # otherwise job is in progress...
             elif ((job_started == True) and
                   (job_completed == False)):
-                # test
-                print("TEST: job started true, job completed false")
                 # Retain only 'INFO' messages...
                 if 'INFO' in line:
-                    # test
-                    print("TEST: info in line")
                     # Hadoop log records will have only 4 fields: date, time, level, message...
                     arr = line.strip().split(' ', 3)
                     if len(arr) == 4:
-                        # test
-                        print("TEST: len is 4")
                         # Parse the timestamp...
                         try:
                             dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
@@ -300,15 +284,10 @@ def hadoop_log_to_dict(flog):
                                 progress = [tuple(progress[idx: idx+2]) for idx in xrange(0, len(progress), 2)]
                                 progress = [(task, float(pct.strip('%'))/100) for (task, pct) in progress]
                                 log[job_id]['progress'][dt_event] = progress
-                                # test
-                                print("TEST: progress is", progress)
                                 continue
                             # otherwise job is complete...
                             elif arr[3] == 'mapreduce.Job: Job '+job_id+' completed successfully':
                                 job_completed = True
-                                # test
-                                print("TEST: job completed")
-                                print("TEST: log ", log)
                                 continue
                             # otherwise ignore other messages.
                             else:
@@ -325,32 +304,18 @@ def hadoop_log_to_dict(flog):
             # otherwise job has just completed.
             elif ((job_started == True) and
                   (job_completed == True)):
-                # TEST
-                print("TEST: job started, job completed")
                 # Retain only job summary, non-'INFO' messages...
                 if 'INFO' not in line:
-                    # TEST
-                    print("TEST: info not in line")
                     # Summary headers don't contain '=' signs...
                     if '=' not in line:
-                        # test
-                        print("TEST: = not in line")
                         header = line
                         log[job_id]['summary'][header] = {}
-                        # test
-                        print("TEST: ", header)
                     # otherwise if not the last key, use as a key for summary dict if not the last key...
                     elif last_summary_key not in line:
-                        # test
-                        print("TEST: = in line, not last key")
                         (key, value) = line.split('=')
                         log[job_id]['summary'][key] = int(value)
-                        # test
-                        print("TEST: ", key, value)
                     # otherwise is the last key.
                     else:
-                        # test
-                        print("TEST: = in line, is last key")
                         (key, value) = line.split('=')
                         log[job_id]['summary'][key] = int(value)
                         # Reset job tracking variables.
