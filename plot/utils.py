@@ -279,11 +279,17 @@ def hadoop_log_to_dict(flog):
             # otherwise job is in progress...
             elif ((job_started == True) and
                   (job_completed == False)):
+                # test
+                print("TEST: job started true, job completed false")
                 # Retain only 'INFO' messages...
                 if 'INFO' in line:
+                    # test
+                    print("TEST: info in line")
                     # Hadoop log records will have only 4 fields: date, time, level, message...
                     arr = line.strip().split(' ', 3)
                     if len(arr) == 4:
+                        # test
+                        print("TEST: len is 4")
                         # Parse the timestamp...
                         try:
                             dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
@@ -293,10 +299,15 @@ def hadoop_log_to_dict(flog):
                                 progress = [tuple(progress[idx: idx+2]) for idx in xrange(0, len(progress), 2)]
                                 progress = [(task, float(pct.strip('%'))/100) for (task, pct) in progress]
                                 log[job_id]['progress'][dt_event] = progress
+                                # test
+                                print("TEST: progress is", progress)
                                 continue
                             # otherwise job is complete...
-                            elif arr[3] == 'mapreduce.Job: '+job_id+' completed successfully':
+                            elif arr[3] == 'mapreduce.Job: Job '+job_id+' completed successfully':
                                 job_completed = True
+                                # test
+                                print("TEST: job completed")
+                                print("TEST: log ", log)
                                 continue
                             # otherwise ignore other messages.
                             else:
