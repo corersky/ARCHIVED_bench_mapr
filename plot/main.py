@@ -18,8 +18,8 @@ def main(args):
     Plot job execution times.
     """
     with open(args.fconfig, 'rb') as fp:
-        plot_args = json.load(fp)
-    utils.plot(**plot_args)
+        pargs = utils.dict_to_class(json.load(fp))
+    utils.plot(pargs)
     return None
 
 if __name__ == '__main__':

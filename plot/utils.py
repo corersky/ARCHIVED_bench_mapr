@@ -15,154 +15,6 @@ import datetime as dt
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-def plot(fplot='plot.pdf',
-         infodict={},
-         comments=[],
-         suptitle='suptitle',
-         xtitle='xtitle', ytitle='ytitle',
-         label1='label1', xypairs1=[(10,1), (30,2), (100,3), (300,4)], xyantn1=[1, 3, 9, 27],
-         label2='label2', xypairs2=[(10,1), (30,2), (100,4), (300,8)], xyantn2=[1, 1, 1, 1],
-         xdivide=1, ydivide=1):
-    """
-    Plot job execution times.
-    """
-    # TODO: combine labels, xypairs, xyannotations into dataframe and reference by df_label.
-    # Check inputs, open PDF file, and print/save metadata.
-    (fplot_base, ext) = os.path.splitext(fplot)
-    if ext != '.pdf':
-        raise IOError(("File extension not '.pdf': {fplot}").format(fplot=fplot))
-    print(("INFO: Writing plot:\n"+
-           "  {fplot}").format(fplot=fplot))
-    pdf = PdfPages(fplot)
-    pdf_infodict = pdf.infodict()
-    if infodict != {}:
-        for key in infodict:
-            pdf_infodict[key] = infodict[key]
-    if comments != []:
-        fcomm = fplot_base+"_comments.txt"
-        print(("INFO: Writing comments:\n"+
-               "  {fcomm}").format(fcomm=fcomm))
-        with open(fcomm, 'wb') as fp:
-            fp.write(("\n".join(comments))+"\n")
-    # Create figure object.
-    subplot_kw = {}
-    subplot_kw['xscale'] = 'log'
-    fig_kw = {}
-    fig_kw['figsize'] = (4., 6.)
-    (fig, ax) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
-    # Plot data and annotations.
-    (x1, y1) = zip(*[(x/xdivide, y/ydivide) for (x, y) in xypairs1])
-    plt1_kw = {}
-    plt1_kw['color'] = 'blue'
-    plt1_kw['linestyle'] = '-'
-    plt1_kw['marker'] = 'o'
-    plt1_kw['label'] = label1
-    ax[0].semilogx(x1, y1, **plt1_kw)
-    ax[1].loglog(x1, y1, **plt1_kw)
-    xypairs1 = zip(x1, y1)
-    for a in ax:
-        for idx in xrange(len(xyantn1)):
-            a.annotate(xyantn1[idx], xy=xypairs1[idx], xycoords='data',
-                       xytext=(+0, +0), textcoords='offset points')
-    if xypairs2 != None:
-        (x2, y2) = zip(*[(x/xdivide, y/ydivide) for (x, y) in xypairs2])
-        plt2_kw = {}
-        plt2_kw['color'] = 'green'
-        plt2_kw['linestyle'] = '-'
-        plt2_kw['marker'] = 's'
-        plt2_kw['label'] = label2
-        ax[0].semilogx(x2, y2, **plt2_kw)
-        ax[1].loglog(x2, y2, **plt2_kw)
-        xypairs2 = zip(x2, y2)
-        for a in ax:
-            for idx in xrange(len(xyantn2)):
-                a.annotate(xyantn2[idx], xy=xypairs2[idx], xycoords='data',
-                           xytext=(+0, -12), textcoords='offset points')
-    else:
-        # TODO: use event logger to handle INFO messages.
-        print("INFO: No xypairs2.")
-    # Scale plot heights and shift lower plot up to make room for legend at bottom.
-    # Reference corner for positions is lower right. Position tuples: (left, bottom, width, height)
-    # Add metadata to legend labels.
-    box0 = ax[0].get_position()
-    wscale  = 1
-    vscale  = 0.95
-    xoffset = 0.03
-    yoffset = (1-vscale)*box0.height
-    ygap    = 0.04
-    ax[0].set_position([box0.x0 + xoffset,
-                        box0.y0 + yoffset,
-                        wscale*box0.width,
-                        vscale*box0.height])
-    box1 = ax[1].get_position()
-    ax[1].set_position([box1.x0 + xoffset,
-                        box1.y0 + ygap + 2*yoffset,
-                        wscale*box1.width,
-                        vscale*box1.height])
-    # Set figure titles and legend.
-    # Reference corner for positions is lower right. Position tuples: (left, bottom, width, height)
-    fig_suptitle = fig.suptitle(suptitle)
-    fig_xtitle = fig.text(x=0.5,
-                          y= 2*ygap + 2*(1-vscale)*box1.height,
-                          s=xtitle,
-                          horizontalalignment='center',
-                          verticalalignment='center')
-    fig_ytitle = fig.text(x=xoffset,
-                          y=0.5,
-                          s=ytitle,
-                          horizontalalignment='center',
-                          verticalalignment='center',
-                          rotation='vertical')
-    (handles, labels) = ax[0].get_legend_handles_labels()
-    fig.legend(handles,
-               labels,
-               loc='lower center',
-               bbox_to_anchor=(0.1 + xoffset,
-                               -0.005,
-                               # -0.06 + 3*(1-vscale)*box1.height,
-                               0.825,
-                               1.00),
-               mode='expand',
-               fontsize=fig_xtitle.get_fontsize())
-    # Save figure and close PDF file.
-    pdf.savefig()
-    pdf.close()
-    return None
-
-def create_plot_config(fjson='plot_config.json'):
-    """
-    Create plot configuration file.
-    """
-    setting_value = collections.OrderedDict()
-    setting_value['fplot']     = 'plot.pdf'
-    setting_value['infodict']  = collections.OrderedDict()
-    setting_value['infodict']['Title']    = "PDF title"
-    setting_value['infodict']['Author']   = "PDF author"
-    setting_value['infodict']['Subject']  = "PDF subject"
-    setting_value['infodict']['Keywords'] = "PDF keywords"
-    setting_value['comments']  = ["Insert multiline",
-                                  "comments here."]
-    setting_value['suptitle']  = ("Platform, job_type, N nodes\n"
-                                 +"exec. time vs data size")
-    setting_value['xtitle']    = "Data size (GB)"
-    setting_value['ytitle']    = "Elapsed time (min)"
-    setting_value['label1']    = "Map (num)"
-    setting_value['xypairs1']  = [(10,1), (30,2), (100,3), (300,4)]
-    setting_value['xyantn1']   = ["m1", "m3", "m9", "m27"]
-    setting_value['label2']    = "Reduce (num)"
-    setting_value['xypairs2']  = [(10,1), (30,2), (100,4), (300,8)]
-    setting_value['xyantn2']   = ["r1", "r1", "r1", "r1"]
-    # setting_value['label2']    = None
-    # setting_value['xypairs2']  = None
-    # setting_value['xyantn2']   = None
-    setting_value['xdivide']   = 1
-    setting_value['ydivide']   = 1
-    # Use binary read-write for cross-platform compatibility.
-    # Use indent for human readability.
-    with open(fjson, 'wb') as fp:
-        json.dump(setting_value, fp, sort_keys=False, indent=4)
-    return None
-
 def duration_to_timedelta(duration):
     """
     Convert duration from HH:MM:SS to datetime timedelta object.
@@ -173,9 +25,9 @@ def duration_to_timedelta(duration):
                                seconds=duration_arr[2])
     return duration_td
 
-def events_to_dict(fevents):
+def disco_events_to_dict(fevents):
     """
-    Read Disco events file from map-reduce job. Return as dict.
+    Parse Disco events file from map-reduce job. Return as dict.
     """
     # Log files from Disco can be > 100 MB.
     # Only read relevant portions into memory.
@@ -186,12 +38,12 @@ def events_to_dict(fevents):
     # Events for a single job.
     events = {}
     timestamp_fmt = "%Y/%m/%d %H:%M:%S"
-    with open(fevents) as fr:
+    with open(fevents, 'rb') as fp:
         map_started = False
         map_finished = False
         reduce_started = False
         reduce_finished = False
-        for line in fr:
+        for line in fp:
             arr = ast.literal_eval(line.strip())
             # Start job
             if 'master' in arr[1]:
@@ -355,3 +207,227 @@ def events_to_dict(fevents):
                     events['time_elapsed'] = duration_to_timedelta(arr[2].rsplit(None, 1)[-1])
                     continue
     return events
+
+def hadoop_log_to_dict(flog):
+    """
+    Parse file with Hadoop standard output. Return as a dict.
+    """
+    # Outout from Hadoop is ~50 KB.
+    # Only read relevant portions into memory, example:
+    # http://blog.cloudera.com/blog/2013/01/a-guide-to-python-frameworks-for-hadoop/
+    # Example records:
+    # ```
+    # 14/07/26 02:52:40 INFO mapreduce.Job: Running job: job_1405523452120_0002
+    # 14/07/26 02:53:40 INFO mapreduce.Job:  map 75% reduce 8%
+    # 14/07/26 02:54:25 INFO mapreduce.Job: Job job_1405523452120_0002 completed successfully
+    # 14/07/26 02:54:25 INFO mapreduce.Job: Counters: 51
+    # File System Counters
+    # FILE: Number of bytes read=336130040
+    # FILE: Number of bytes written=673071732
+    # HDFS: Number of bytes read=980649565
+    # ```
+    log = {}
+    timestamp_fmt = "%y/%m/%d %H:%M:%S"
+    with open(flog, 'rb') as fp:
+        job_started = False
+        job_id = None
+        job_completed = False
+        for line in fp:
+            arr = line.strip().split(' ', 3)
+            print("test:")
+            print(arr)
+            # Ignore lines with fewer than 4 fields.
+            # TODO: Correct for end-log summary.
+            if len(arr) == 4:
+                # Parse the timestamp.
+                try:
+                    dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
+                    # Retain only 'INFO' messages.
+                    if arr[2] == 'INFO':
+                        # A new job has started.
+                        if 'mapreduce.Job: Running job:' in arr[3]:
+                            job_started = True
+                            job_id = arr[3].rsplit(' ', 1)[-1]
+                            log[job_id] = {}
+                            log[job_id]['progress'] = {}
+                        # Progress on a current job.
+                        elif 'mapreduce.Job:  map' in arr[3]:
+                            print("test")
+                            progress = arr[3].split()[1:]
+                            progress = [tuple(progress[idx: idx+2]) for idx in xrange(0, len(progress), 2)]
+                            progress = [(task, float(pct.strip('%'))/100) for (task, pct) in progress]
+                            log[job_id]['progress'][dt_event] = progress
+                            print(log[job_id]['progress'][dt_event])
+                    # Ignore non-'INFO' messages.
+                    else:
+                        continue
+                # Ignore lines without timestamps.
+                except ValueError:
+                    continue
+            else:
+                pass
+            ## if the line's first 2 elements dont make a datetime, ignore
+            ## if they do, parse into datetime, level, message
+            ##     if INFO message contains "mapreduce.Job: Running job:" save job_id, job_started=True
+            ##         if INFO message contains "mapreduce.Job: map",
+            ##             save dict[progress][datetime]=[(key1, field1), ...]
+            # RESUME HERE
+            #         if INFO message contains "mapreduce.Job: Counters":
+            #             if 'File System Counters', 'Job Counters', 'Map-Reduce Framework', 'Shuffle Errors',
+            #                 'File Input Format Counters', File Output Format Counters' then dict['File...']
+            #                 split on '=', else job_completed=True
+            
+            pass
+    return None
+
+def dict_to_class(dobj):
+    """
+    Convert keys of a dict into attributes of a class.
+    """
+    Dclass = collections.namedtuple('Dclass', dobj.keys())
+    return Dclass(**dobj)
+
+def create_plot_config(fjson='plot_config.json'):
+    """
+    Create plot configuration file.
+    """
+    setting_value = collections.OrderedDict()
+    setting_value['fplot']     = 'plot.pdf'
+    setting_value['infodict']  = collections.OrderedDict()
+    setting_value['infodict']['Title']    = "PDF title"
+    setting_value['infodict']['Author']   = "PDF author"
+    setting_value['infodict']['Subject']  = "PDF subject"
+    setting_value['infodict']['Keywords'] = "PDF keywords"
+    setting_value['comments'] = ["Insert multiline",
+                                  "comments here."]
+    setting_value['suptitle'] = ("Platform, job_type, N nodes\n"
+                                 +"exec. time vs data size")
+    setting_value['xtitle']   = "Data size (GB)"
+    setting_value['ytitle']   = "Elapsed time (min)"
+    setting_value['label1']   = "Map (num)"
+    setting_value['xypairs1'] = [(10,1), (30,2), (100,3), (300,4)]
+    setting_value['xyantn1']  = [1, 2, 3, 4]
+    setting_value['prefantn1']= "m"
+    setting_value['label2']   = "Reduce (num)"
+    setting_value['xypairs2'] = [(10,1), (30,2), (100,4), (300,8)]
+    setting_value['xyantn2']  = [1, 1, 1, 1]
+    setting_value['prefantn2']= "r"
+    # setting_value['label2']   = None
+    # setting_value['xypairs2'] = None
+    # setting_value['xyantn2']  = None
+    setting_value['xdivide']  = 1
+    setting_value['ydivide']  = 1
+    setting_value['ydivbyantn'] = True
+    # Use binary read-write for cross-platform compatibility.
+    # Use indent for human readability.
+    with open(fjson, 'wb') as fp:
+        json.dump(setting_value, fp, sort_keys=False, indent=4)
+    return None
+
+def plot(args):
+    """
+    Plot job execution times.
+    """
+    # TODO: combine labels, xypairs, xyannotations into dataframe and reference by df_label.
+    # Check inputs, open PDF file, and print/save metadata.
+    (fplot_base, ext) = os.path.splitext(args.fplot)
+    if ext != '.pdf':
+        raise IOError(("File extension not '.pdf': {fplot}").format(fplot=args.fplot))
+    print(("INFO: Writing plot:\n"+
+           "  {fplot}").format(fplot=args.fplot))
+    pdf = PdfPages(args.fplot)
+    pdf_infodict = pdf.infodict()
+    if args.infodict != {}:
+        for key in args.infodict:
+            pdf_infodict[key] = args.infodict[key]
+    if args.comments != []:
+        fcomm = fplot_base+"_comments.txt"
+        print(("INFO: Writing comments:\n"+
+               "  {fcomm}").format(fcomm=fcomm))
+        with open(fcomm, 'wb') as fp:
+            fp.write(("\n".join(args.comments))+"\n")
+    # Create figure object.
+    subplot_kw = {'xscale': 'log'}
+    fig_kw = {'figsize': (4, 6)}
+    (fig, ax) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
+    # Plot normalized data and annotations.
+    (x1, y1) = zip(*[(x/args.xdivide, y/args.ydivide) for (x, y) in args.xypairs1])
+    if args.ydivbyantn:
+        y1 = [y/antn for (y, antn) in zip(y1, args.xyantn1)]
+    plt1_kw = {'color'    : 'blue',
+               'linestyle': '-',
+               'marker'   : 'o',
+               'label'    : args.label1}
+    ax[0].semilogx(x1, y1, **plt1_kw)
+    ax[1].loglog(x1, y1, **plt1_kw)
+    xypairs1 = zip(x1, y1)
+    for a in ax:
+        for idx in xrange(len(args.xyantn1)):
+            a.annotate(args.prefantn1+str(args.xyantn1[idx]), xy=xypairs1[idx], xycoords='data',
+                       xytext=(+0, +0), textcoords='offset points')
+    if args.xypairs2 != None:
+        (x2, y2) = zip(*[(x/args.xdivide, y/args.ydivide) for (x, y) in args.xypairs2])
+        if args.ydivbyantn:
+            y2 = [y/antn for (y, antn) in zip(y2, args.xyantn2)]
+        plt2_kw = {'color'    : 'green',
+                   'linestyle': '-',
+                   'marker'   : 's',
+                   'label'    : args.label2}
+        ax[0].semilogx(x2, y2, **plt2_kw)
+        ax[1].loglog(x2, y2, **plt2_kw)
+        xypairs2 = zip(x2, y2)
+        for a in ax:
+            for idx in xrange(len(args.xyantn2)):
+                a.annotate(args.prefantn2+str(args.xyantn2[idx]), xy=xypairs2[idx], xycoords='data',
+                           xytext=(+0, -12), textcoords='offset points')
+    else:
+        # TODO: use event logger to handle INFO messages.
+        print("INFO: No xypairs2.")
+    # Scale plot heights and shift lower plot up to make room for legend at bottom.
+    # Reference corner for positions is lower right. Position tuples: (left, bottom, width, height)
+    # Add metadata to legend labels.
+    box0 = ax[0].get_position()
+    wscale  = 1
+    vscale  = 0.95
+    xoffset = 0.03
+    yoffset = (1-vscale)*box0.height
+    ygap    = 0.04
+    ax[0].set_position([box0.x0 + xoffset,
+                        box0.y0 + yoffset,
+                        wscale*box0.width,
+                        vscale*box0.height])
+    box1 = ax[1].get_position()
+    ax[1].set_position([box1.x0 + xoffset,
+                        box1.y0 + ygap + 2*yoffset,
+                        wscale*box1.width,
+                        vscale*box1.height])
+    # Set figure titles and legend.
+    # Reference corner for positions is lower right. Position tuples: (left, bottom, width, height)
+    fig_suptitle = fig.suptitle(args.suptitle)
+    fig_xtitle = fig.text(x=0.5,
+                          y= 2*ygap + 2*(1-vscale)*box1.height,
+                          s=args.xtitle,
+                          horizontalalignment='center',
+                          verticalalignment='center')
+    fig_ytitle = fig.text(x=xoffset,
+                          y=0.5,
+                          s=args.ytitle,
+                          horizontalalignment='center',
+                          verticalalignment='center',
+                          rotation='vertical')
+    (handles, labels) = ax[0].get_legend_handles_labels()
+    fig.legend(handles,
+               labels,
+               loc='lower center',
+               bbox_to_anchor=(0.1 + xoffset,
+                               -0.005,
+                               # -0.06 + 3*(1-vscale)*box1.height,
+                               0.825,
+                               1.00),
+               mode='expand',
+               fontsize=fig_xtitle.get_fontsize())
+    # Save figure and close PDF file.
+    pdf.savefig()
+    pdf.close()
+    return None
+

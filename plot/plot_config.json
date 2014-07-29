@@ -33,11 +33,12 @@
         ]
     ], 
     "xyantn1": [
-        "m1", 
-        "m3", 
-        "m9", 
-        "m27"
+        1, 
+        2, 
+        3, 
+        4
     ], 
+    "prefantn1": "m", 
     "label2": "Reduce (num)", 
     "xypairs2": [
         [
@@ -58,11 +59,13 @@
         ]
     ], 
     "xyantn2": [
-        "r1", 
-        "r1", 
-        "r1", 
-        "r1"
+        1, 
+        1, 
+        1, 
+        1
     ], 
+    "prefantn2": "r", 
     "xdivide": 1, 
-    "ydivide": 1
+    "ydivide": 1, 
+    "ydivbyantn": true
 }
