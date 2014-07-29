@@ -383,6 +383,10 @@ def plot(args):
     (fplot_base, ext) = os.path.splitext(args.fplot)
     if ext != '.pdf':
         raise IOError(("File extension not '.pdf': {fplot}").format(fplot=args.fplot))
+    if ((len(args.xypairs1) != len(args.xyantn1)) or
+        (len(args.xypairs1) != len(args.xypairs2)) or
+        (len(args.xypairs1) != len(args.xyantn2))):
+        raise AssertionError("Length of xy arguments is not equal.")
     print(("INFO: Writing plot:\n"+
            "  {fplot}").format(fplot=args.fplot))
     pdf = PdfPages(args.fplot)
@@ -414,7 +418,7 @@ def plot(args):
     for a in ax:
         for idx in xrange(len(args.xyantn1)):
             a.annotate(args.prefantn1+str(args.xyantn1[idx]), xy=xypairs1[idx], xycoords='data',
-                       xytext=(+0, +0), textcoords='offset points')
+                       xytext=(0,0), textcoords='offset points', fontsize=8, rotation=-45)
     if args.xypairs2 != None:
         (x2, y2) = zip(*[(x/args.xdivide, y/args.ydivide) for (x, y) in args.xypairs2])
         if args.ydivbyantn:
@@ -429,7 +433,7 @@ def plot(args):
         for a in ax:
             for idx in xrange(len(args.xyantn2)):
                 a.annotate(args.prefantn2+str(args.xyantn2[idx]), xy=xypairs2[idx], xycoords='data',
-                           xytext=(+0, -12), textcoords='offset points')
+                           xytext=(0,0), textcoords='offset points', fontsize=8, rotation=-45)
     else:
         # TODO: use event logger to handle INFO messages.
         print("INFO: No xypairs2.")
