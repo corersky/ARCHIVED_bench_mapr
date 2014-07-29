@@ -236,42 +236,38 @@ def hadoop_log_to_dict(flog):
             arr = line.strip().split(' ', 3)
             print("test:")
             print(arr)
-            # Ignore lines with fewer than 4 fields.
-            # TODO: Correct for end-log summary.
-            if len(arr) == 4:
-                # Parse the timestamp.
-                try:
-                    dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
-                    # Retain only 'INFO' messages.
-                    if arr[2] == 'INFO':
-                        # A new job has started.
-                        if 'mapreduce.Job: Running job:' in arr[3]:
-                            job_started = True
-                            job_id = arr[3].rsplit(' ', 1)[-1]
-                            log[job_id] = {}
-                            log[job_id]['progress'] = {}
-                        # Progress on a current job.
-                        elif 'mapreduce.Job:  map' in arr[3]:
-                            print("test")
-                            progress = arr[3].split()[1:]
-                            progress = [tuple(progress[idx: idx+2]) for idx in xrange(0, len(progress), 2)]
-                            progress = [(task, float(pct.strip('%'))/100) for (task, pct) in progress]
-                            log[job_id]['progress'][dt_event] = progress
-                            print(log[job_id]['progress'][dt_event])
-                    # Ignore non-'INFO' messages.
-                    else:
+            # No job has yet been started.
+            if job_started == False:
+                # Hadoop log records will have only 4 fields: date, time, level, message.
+                if len(arr) == 4:
+                    # Parse the timestamp.
+                    try:
+                        dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
+                        # Retain only 'INFO' messages.
+                        if arr[2] == 'INFO':
+                            # A new job has started.
+                            if 'mapreduce.Job: Running job:' in arr[3]:
+                                job_started = True
+                                job_id = arr[3].rsplit(' ', 1)[-1]
+                                log[job_id] = {}
+                                log[job_id]['progress'] = {}
+                                log[job_id]['summary'] = {}
+                        # Ignore non-'INFO' messages.
+                        else:
+                            continue
+                    # Ignore lines without timestamps.
+                    except ValueError:
                         continue
-                # Ignore lines without timestamps.
-                except ValueError:
+                # Ignore lines without 4 fields.
+                else:
                     continue
             else:
-                pass
+                
             ## if the line's first 2 elements dont make a datetime, ignore
             ## if they do, parse into datetime, level, message
             ##     if INFO message contains "mapreduce.Job: Running job:" save job_id, job_started=True
             ##         if INFO message contains "mapreduce.Job: map",
             ##             save dict[progress][datetime]=[(key1, field1), ...]
-            # RESUME HERE
             #         if INFO message contains "mapreduce.Job: Counters":
             #             if 'File System Counters', 'Job Counters', 'Map-Reduce Framework', 'Shuffle Errors',
             #                 'File Input Format Counters', File Output Format Counters' then dict['File...']
