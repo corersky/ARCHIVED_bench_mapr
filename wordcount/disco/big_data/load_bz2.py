@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Download bz2 files from list and upload to Hadoop.
+Download files from a list and upload to distributed file systems.
 """
 
 from __future__ import print_function, division
@@ -14,6 +14,8 @@ import operator
 import pandas as pd
 from subprocess32 import Popen
 from disco.ddfs import DDFS
+
+# TODO: use logging for error messages.
 
 class ErrMsg(object):
     """
@@ -54,7 +56,7 @@ class ErrMsg(object):
                    +" Search output above for 'ERROR:'").format(num=ErrMsg._err_count), file=sys.stderr)
         return None
 
-def csv2df(fcsv):
+def csv_to_df(fcsv):
     """
     Read a CSV file and return as a dataframe.
     Ignore comments starting with #.
@@ -84,7 +86,7 @@ def create_df_concat(fcsv_list):
     """
     df_dict = {}
     for fcsv in fcsv_list:
-        df = csv2df(fcsv=fcsv)
+        df = csv_to_df(fcsv=fcsv)
         fcsv_basename = os.path.basename(fcsv)
         df_dict[fcsv_basename] = df
     df_concat = pd.concat(df_dict)
@@ -94,8 +96,6 @@ def download(url, fout="download.out"):
     """
     Download a file from a URL.
     """
-    # From http://stackoverflow.com/questions/4028697
-    # /how-do-i-download-a-zip-file-in-python-using-urllib2
     f_url = urllib2.urlopen(url)
     with open(fout, 'wb') as fo:
         fo.write(f_url.read())
@@ -111,9 +111,7 @@ def decom_part(fbz2, fout="decompress.out"):
     (base, ext) = os.path.splitext(fbz2)
     if ext != '.bz2':
         raise IOError(("File extension not '.bz2': {fname}").format(fname=fbz2))
-    # Read large file incrementally and insert newlines every 100 KB. From:
-    # http://stackoverflow.com/questions/16963352/decompress-bz2-files
-    # http://bob.ippoli.to/archives/2005/06/14/python-iterators-and-sentinel-values/
+    # Read large file incrementally and insert newlines every 100 KB.
     with open(fout, 'wb') as fo, bz2.BZ2File(fbz2, 'rb') as fb:
         for data in iter(lambda : fb.read(100*1024), b''):
             fo.write(data)
@@ -142,7 +140,7 @@ def main_load(args):
             except: ErrMsg().eprint(err=sys.exc_info())
     # Decompress and partition bz2 file if it doesn't exist.
     # TODO: parallelize, see "programing python" on threads
-    # quick hack: use Popen with bunzip2 and "grep -oE '.{1,1000}' fname" to partition
+    # quick hack: use Popen with "bunzip2 --keep" and "grep -oE '.{1,1000}' fname" to partition
     for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
         fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
         fdecom = os.path.splitext(fbz2)[0]
@@ -244,26 +242,40 @@ def main_sets(args):
     - Append data to settag from filetags in DDFS.
     - Note: Must have all 'filetag' loaded.
     """
-    # TODO: Don't load settag if it already exists.
     df_bz2urls_filetags = args.df_concat.dropna(subset=['bz2url', 'filetag'])
     bytes_per_gb = 10**9
     filetag_sizegb_map = {}
+    # If it exists, use checked, downloaded data from Disco to verify dataset sizes,
+    # otherwise use decompressed files prior to Disco upload.
+    if args.check_filetags:
+        # idx variables are unused.
+        for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
+            ftag = os.path.join(args.data_dir, filetag+'.txt')
+            ftag_sizegb = os.path.getsize(ftag) / bytes_per_gb
+            filetag_sizegb_map[filetag] = ftag_sizegb
+    else:
+        # idx variables are unused.
+        for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
+            fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
+            fdecom = os.path.splitext(fbz2)[0]
+            fdecom_sizegb = os.path.getsize(fdecom) / bytes_per_gb
+            filetag_sizegb_map[filetag] = fdecom_sizegb
     # Sort filetags by size in descending order.
-    # idx variables are unused.
-    for (idx, bz2url, filetag) in df_bz2urls_filetags[['bz2url', 'filetag']].itertuples():
-        fbz2 = os.path.join(args.data_dir, os.path.basename(bz2url))
-        fdecom = os.path.splitext(fbz2)[0]
-        fdecom_sizegb = os.path.getsize(fdecom) / bytes_per_gb
-        filetag_sizegb_map[filetag] = fdecom_sizegb
+    # Add filetags to a dataset as long as they can fit. Nest the data sets.
     filetag_sizegb_sorted = sorted(filetag_sizegb_map.iteritems(), key=operator.itemgetter(1), reverse=True)
-    # Add filetags to a dataset as long as they can fit.
     settag_filetags_map = {}
-    for size in args.sets_gb:
+    is_first = True
+    for size in sorted(args.sets_gb):
         filetags = []
         tot = 0.
         res = size
+        # Include smaller data sets in the next larger dataset.
+        if not is_first:
+            filetags.extend(settag_filetags_map[prev_settag])
+            tot += prev_tot
+            res -= prev_tot
         for (filetag, sizegb) in filetag_sizegb_sorted:
-            if sizegb <= res:
+            if (sizegb <= res) and (filetag not in filetags):
                 filetags.append(filetag)
                 tot += sizegb
                 res -= sizegb
@@ -271,18 +283,28 @@ def main_sets(args):
         # Note: Disco tags must have character class [A-Za-z0-9_\-@:]+ else get CommError.
         settag = ("{tot:.2f}GB".format(tot=tot)).replace('.', '-')
         settag_filetags_map[settag] = filetags
+        # Include the smaller data set in the next larger dataset.
+        prev_tot = tot
+        prev_settag = settag
+        is_first = False
     # Append data to settag from filetags in DDFS.
-    for settag in settag_filetags_map:
-        if args.verbose >= 1:
-            print(("INFO: Appending data to settag from filetags:\n"
-                   +" {settag}\n"
-                   +" {filetags}").format(settag=settag,
-                                          filetags=settag_filetags_map[settag]))
-        for filetag in settag_filetags_map[settag]:
-            try:
-                filetag_urls = DDFS().urls(filetag)
-                DDFS().tag(settag, filetag_urls)
-            except: ErrMsg().eprint(err=sys.exc_info())
+    # TODO: use logging.
+    for settag in sorted(settag_filetags_map):
+        if DDFS().exists(tag=settag):
+            if args.verbose >= 2:
+                print(("INFO: Skipping Disco upload."
+                       +" Tag already exists:\n {tag}.").format(tag=settag))
+        else:
+            if args.verbose >= 1:
+                print(("INFO: Appending data to settag from filetags:\n"
+                       +" {settag}\n"
+                       +" {filetags}").format(settag=settag,
+                                              filetags=settag_filetags_map[settag]))
+            for filetag in settag_filetags_map[settag]:
+                try:
+                    filetag_urls = DDFS().urls(filetag)
+                    DDFS().tag(settag, filetag_urls)
+                except: ErrMsg().eprint(err=sys.exc_info())
     return None
 
 def main(args):
@@ -303,6 +325,7 @@ def main(args):
     if args.check_filetags:
         main_check_filetags(args)
     # Pack individual files to data sets, if provided.
+    # Use checked filetas if available, otherwise use source files.
     if len(args.sets_gb) > 0:
         main_sets(args)
     # At end, report error count.
@@ -310,6 +333,7 @@ def main(args):
     return None
 
 if __name__ == '__main__':
+    # TODO: use config file instead.
     arg_default_map = {}
     arg_default_map['fcsvs'] = glob.glob(os.path.join(os.getcwd(), '*.csv'))
     arg_default_map['data_dir'] = '/tmp'
