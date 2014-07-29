@@ -313,11 +313,11 @@ def hadoop_log_to_dict(flog):
                     # otherwise if not the last key, use as a key for summary dict if not the last key...
                     elif last_summary_key not in line:
                         (key, value) = line.split('=')
-                        log[job_id]['summary'][key] = int(value)
+                        log[job_id]['summary'][header][key] = int(value)
                     # otherwise is the last key.
                     else:
                         (key, value) = line.split('=')
-                        log[job_id]['summary'][key] = int(value)
+                        log[job_id]['summary'][header][key] = int(value)
                         # Reset job tracking variables.
                         job_started = False
                         job_id = None
