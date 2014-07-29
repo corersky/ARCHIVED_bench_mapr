@@ -229,6 +229,7 @@ def hadoop_log_to_dict(flog):
     log = {}
     timestamp_fmt = "%y/%m/%d %H:%M:%S"
     with open(flog, 'rb') as fp:
+        # Initialize job tracking variables.
         job_started = False
         job_id = None
         job_completed = False
@@ -236,16 +237,17 @@ def hadoop_log_to_dict(flog):
             arr = line.strip().split(' ', 3)
             print("test:")
             print(arr)
-            # No job has yet been started.
-            if job_started == False:
-                # Hadoop log records will have only 4 fields: date, time, level, message.
+            # No job has yet been started...
+            if ((job_started == False) and
+                (job_completed == False)):
+                # Hadoop log records will have only 4 fields: date, time, level, message...
                 if len(arr) == 4:
-                    # Parse the timestamp.
+                    # Parse the timestamp...
                     try:
                         dt_event = dt.datetime.strptime(arr[0]+' '+arr[1], timestamp_fmt)
-                        # Retain only 'INFO' messages.
+                        # Retain only 'INFO' messages...
                         if arr[2] == 'INFO':
-                            # A new job has started.
+                            # A new job has started...
                             if 'mapreduce.Job: Running job:' in arr[3]:
                                 job_started = True
                                 job_id = arr[3].rsplit(' ', 1)[-1]
@@ -253,30 +255,48 @@ def hadoop_log_to_dict(flog):
                                 log[job_id]['progress'] = {}
                                 log[job_id]['summary'] = {}
                                 continue
+                            # otherwise ignore Hadoop startup messages.
                             else:
                                 continue
-                        # Ignore non-'INFO' messages.
+                        # otherwise ignore non-'INFO' messages.
                         else:
                             continue
-                    # Ignore lines without timestamps.
+                    # otherwise ignore lines without timestamps.
                     except ValueError:
                         continue
-                # Ignore lines without 4 fields.
+                # otherwise ignore lines without 4 fields.
                 else:
                     continue
-            # A job was previously started.
-            else:
-                # Progress on a current job.
+            # otherwise job is in progress...
+            elif ((job_started == True) and
+                  (job_completed == False)):
+                # Progress on a current job...
                 if 'mapreduce.Job:  map' in arr[3]:
-                    print("test")
                     progress = arr[3].split()[1:]
                     progress = [tuple(progress[idx: idx+2]) for idx in xrange(0, len(progress), 2)]
                     progress = [(task, float(pct.strip('%'))/100) for (task, pct) in progress]
                     log[job_id]['progress'][dt_event] = progress
-                    print(log[job_id]['progress'][dt_event])
                     continue
+                # otherwise job is complete or...
+                elif arr[3] == 'mapreduce.Job: '+job_id+' completed successfully':
+                    job_completed = True
+                    continue
+                # otherwise ignore as job may have failed.
                 else:
                     continue
+            # otherwise job has just completed.
+            elif ((job_started == True) and
+                  (job_completed == True)):
+                # parse = statements
+                # Reset job tracking variables.
+                job_started = False
+                job_id = None
+                job_completed = False
+                continue
+            # otherwise there is a programming error.
+            else:
+                raise AssertionError(("Invalid case for job status."))
+                
                 
         ## if the line's first 2 elements dont make a datetime, ignore
         ## if they do, parse into datetime, level, message
