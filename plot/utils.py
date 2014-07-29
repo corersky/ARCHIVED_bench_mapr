@@ -252,6 +252,9 @@ def hadoop_log_to_dict(flog):
                                 log[job_id] = {}
                                 log[job_id]['progress'] = {}
                                 log[job_id]['summary'] = {}
+                                continue
+                            else:
+                                continue
                         # Ignore non-'INFO' messages.
                         else:
                             continue
@@ -261,19 +264,29 @@ def hadoop_log_to_dict(flog):
                 # Ignore lines without 4 fields.
                 else:
                     continue
+            # A job was previously started.
             else:
+                # Progress on a current job.
+                if 'mapreduce.Job:  map' in arr[3]:
+                    print("test")
+                    progress = arr[3].split()[1:]
+                    progress = [tuple(progress[idx: idx+2]) for idx in xrange(0, len(progress), 2)]
+                    progress = [(task, float(pct.strip('%'))/100) for (task, pct) in progress]
+                    log[job_id]['progress'][dt_event] = progress
+                    print(log[job_id]['progress'][dt_event])
+                    continue
+                else:
+                    continue
                 
-            ## if the line's first 2 elements dont make a datetime, ignore
-            ## if they do, parse into datetime, level, message
-            ##     if INFO message contains "mapreduce.Job: Running job:" save job_id, job_started=True
-            ##         if INFO message contains "mapreduce.Job: map",
-            ##             save dict[progress][datetime]=[(key1, field1), ...]
-            #         if INFO message contains "mapreduce.Job: Counters":
-            #             if 'File System Counters', 'Job Counters', 'Map-Reduce Framework', 'Shuffle Errors',
-            #                 'File Input Format Counters', File Output Format Counters' then dict['File...']
-            #                 split on '=', else job_completed=True
-            
-            pass
+        ## if the line's first 2 elements dont make a datetime, ignore
+        ## if they do, parse into datetime, level, message
+        ##     if INFO message contains "mapreduce.Job: Running job:" save job_id, job_started=True
+        ##         if INFO message contains "mapreduce.Job: map",
+        ##             save dict[progress][datetime]=[(key1, field1), ...]
+        #         if INFO message contains "mapreduce.Job: Counters":
+        #             if 'File System Counters', 'Job Counters', 'Map-Reduce Framework', 'Shuffle Errors',
+        #                 'File Input Format Counters', File Output Format Counters' then dict['File...']
+        #                 split on '=', else job_completed=True
     return None
 
 def dict_to_class(dobj):
