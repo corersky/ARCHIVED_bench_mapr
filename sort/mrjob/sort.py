@@ -19,13 +19,13 @@ class MRWordcount(MRJob):
     # No combiner since the keys are the lines,
     # and it's very unlikely that a mapper has multiple identical lines.
     
-    def reducer(self, word, counts):
+    def reducer(self, line, count):
         """
         Hadoop sorts the keys (lines) before sending to the reducer.
         Read in the line then yield as the key.
         The value is just a place holder.
         """
-        yield (line, 1)
+        yield (line, count)
 
 if __name__ == '__main__':
     MRWordcount.run()
