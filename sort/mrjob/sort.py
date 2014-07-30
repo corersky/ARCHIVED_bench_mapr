@@ -10,24 +10,22 @@ class MRWordcount(MRJob):
 
     def mapper(self, _, line):
         """
-        Read in line. Parse line into list of words.
-        Yield words with a single count.
+        Read in the line then yield as the key.
+        The value is just a place holder.
+        Hadoop sorts the keys (lines) before sending to the reducer.
         """
-        words = line.split()
-        for word in words:
-            yield (word, 1)
+        yield (line, 1)
 
-    def combiner(self, word, counts):
-        """
-        For each word, aggregate over the counts.
-        """
-        yield (word, sum(counts))
-
+    # No combiner since the keys are the lines,
+    # and it's very unlikely that a mapper has multiple identical lines.
+    
     def reducer(self, word, counts):
         """
-        For each word, aggregate over the counts.
+        Hadoop sorts the keys (lines) before sending to the reducer.
+        Read in the line then yield as the key.
+        The value is just a place holder.
         """
-        yield (word, sum(counts))
+        yield (line, 1)
 
 if __name__ == '__main__':
     MRWordcount.run()
