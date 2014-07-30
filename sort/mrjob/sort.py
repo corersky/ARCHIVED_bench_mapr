@@ -6,7 +6,7 @@ Following https://pythonhosted.org/mrjob/guides/quickstart.html
 
 from mrjob.job import MRJob
 
-class MRWordcount(MRJob):
+class MRSort(MRJob):
 
     def mapper(self, _, line):
         """
@@ -28,4 +28,4 @@ class MRWordcount(MRJob):
         yield (line, count)
 
 if __name__ == '__main__':
-    MRWordcount.run()
+    MRSort.run()
