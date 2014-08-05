@@ -10,10 +10,10 @@
         "Insert multiline", 
         "comments here."
     ], 
-    "suptitle": "Platform, job_type, N nodes\nexec. time vs data size", 
+    "suptitle": "Platform, job description\navg. time per task vs data size", 
     "xtitle": "Data size (GB)", 
-    "ytitle": "Elapsed time (min)", 
-    "label1": "Map (num)", 
+    "ytitle": "Avg. time per task (min) (num.tasks)",
+    "label1": "Map (num. maps)", 
     "xypairs1": [
         [
             10, 
@@ -39,7 +39,7 @@
         4
     ], 
     "prefantn1": "m", 
-    "label2": "Reduce (num)", 
+    "label2": "Reduce (num. reds)", 
     "xypairs2": [
         [
             10, 

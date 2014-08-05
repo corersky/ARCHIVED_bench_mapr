@@ -348,25 +348,25 @@ def create_plot_config(fjson='plot_config.json'):
     setting_value['infodict']['Author']   = "PDF author"
     setting_value['infodict']['Subject']  = "PDF subject"
     setting_value['infodict']['Keywords'] = "PDF keywords"
-    setting_value['comments'] = ["Insert multiline",
+    setting_value['comments']  = ["Insert multiline",
                                   "comments here."]
-    setting_value['suptitle'] = ("Platform, job_type, N nodes\n"
-                                 +"exec. time vs data size")
-    setting_value['xtitle']   = "Data size (GB)"
-    setting_value['ytitle']   = "Elapsed time (min)"
-    setting_value['label1']   = "Map (num)"
-    setting_value['xypairs1'] = [(10,1), (30,2), (100,3), (300,4)]
-    setting_value['xyantn1']  = [1, 2, 3, 4]
-    setting_value['prefantn1']= "m"
-    setting_value['label2']   = "Reduce (num)"
-    setting_value['xypairs2'] = [(10,1), (30,2), (100,4), (300,8)]
-    setting_value['xyantn2']  = [1, 1, 1, 1]
-    setting_value['prefantn2']= "r"
-    # setting_value['label2']   = None
-    # setting_value['xypairs2'] = None
-    # setting_value['xyantn2']  = None
-    setting_value['xdivide']  = 1
-    setting_value['ydivide']  = 1
+    setting_value['suptitle']  = ("Platform, job description\navg. time per task vs data size")
+    setting_value['xtitle']    = "Data size (GB)"
+    setting_value['ytitle']    = "Elapsed time (min)"
+    setting_value['label1']    = "Map (num)"
+    setting_value['xypairs1']  = [(10,1), (30,2), (100,3), (300,4)]
+    setting_value['xyantn1']   = [1, 2, 3, 4]
+    setting_value['prefantn1'] = "m"
+    setting_value['label2']    = "Reduce (num)"
+    setting_value['xypairs2']  = [(10,1), (30,2), (100,4), (300,8)]
+    setting_value['xyantn2']   = [1, 1, 1, 1]
+    setting_value['prefantn2'] = "r"
+    setting_value['xmin'] = 1
+    setting_value['xmax'] = 1000
+    setting_value['ymin'] = 0.1
+    setting_value['ymax'] = 1000
+    setting_value['xdivide'] = 1
+    setting_value['ydivide'] = 1
     setting_value['ydivbyantn'] = True
     # Use binary read-write for cross-platform compatibility.
     # Use indent for human readability.
