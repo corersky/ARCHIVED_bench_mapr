@@ -65,6 +65,14 @@
         1
     ], 
     "prefantn2": "r", 
+    "xlim": [
+        1, 
+        1000
+    ], 
+    "ylim": [
+        0.01, 
+        1000
+    ], 
     "xdivide": 1, 
     "ydivide": 1, 
     "ydivbyantn": true
