@@ -1,19 +1,62 @@
 #!/usr/bin/env python
-"""
-Utilities for plotting.
+"""Utilities for plotting.
 """
 
-# TODO: have common module for import
+# TODO: have common module for import 
 # TODO: have test module
 
 from __future__ import print_function, division
 import os
+import collections
 import ast
 import json
-import collections
 import datetime as dt
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+
+def create_plot_config(fjson='plot_config.json'):
+    """Create plot configuration file.
+
+    To omit an argument, set it to None.
+    
+    """
+    setting_value = collections.OrderedDict()
+    setting_value['fplot']     = 'plot.pdf'
+    setting_value['infodict']  = collections.OrderedDict()
+    setting_value['infodict']['Title']    = "PDF title"
+    setting_value['infodict']['Author']   = "PDF author"
+    setting_value['infodict']['Subject']  = "PDF subject"
+    setting_value['infodict']['Keywords'] = "PDF keywords"
+    setting_value['comments'] = ["Insert multiline",
+                                  "comments here."]
+    setting_value['suptitle'] = ("Platform, job_type, N nodes\n"
+                                 +"exec. time vs data size")
+    setting_value['xtitle']   = "Data size (GB)"
+    setting_value['ytitle']   = "Elapsed time (min)"
+    setting_value['label1']   = "Map (num)"
+    setting_value['xypairs1'] = [(10,1), (30,2), (100,3), (300,4)]
+    setting_value['xyantn1']  = [1, 2, 3, 4]
+    setting_value['prefantn1']= "m"
+    setting_value['label2']   = "Reduce (num)"
+    setting_value['xypairs2'] = [(10,1), (30,2), (100,4), (300,8)]
+    setting_value['xyantn2']  = [1, 1, 1, 1]
+    setting_value['prefantn2']= "r"
+    setting_value['xlim']     = (1, 1000)
+    setting_value['ylim']     = (0.01, 1000)
+    setting_value['xdivide']  = 1
+    setting_value['ydivide']  = 1
+    setting_value['ydivbyantn'] = True
+    # Use binary read-write for cross-platform compatibility.
+    # Use Python-style indent.
+    with open(fjson, 'wb') as fp:
+        json.dump(setting_value, fp, sort_keys=False, indent=4)
+    return None
+
+def dict_to_class(dobj):
+    """Convert keys of a dict into attributes of a class.
+    """
+    Dclass = collections.namedtuple('Dclass', dobj.keys())
+    return Dclass(**dobj)
 
 def duration_to_timedelta(duration):
     """
@@ -330,6 +373,7 @@ def hadoop_log_to_dict(flog):
                 raise AssertionError(("Hadoop job may have failed. Check log manually."))
     return log
 
+<<<<<<< HEAD
 def dict_to_class(dobj):
     """
     Convert keys of a dict into attributes of a class.
@@ -374,6 +418,8 @@ def create_plot_config(fjson='plot_config.json'):
         json.dump(setting_value, fp, sort_keys=False, indent=4)
     return None
 
+=======
+>>>>>>> develop
 def plot(args):
     """
     Plot job execution times.
@@ -401,7 +447,9 @@ def plot(args):
         with open(fcomm, 'wb') as fp:
             fp.write(("\n".join(args.comments))+"\n")
     # Create figure object.
-    subplot_kw = {'xscale': 'log'}
+    subplot_kw = {'xscale': 'log',
+                  'xlim'  : args.xlim,
+                  'ylim'  : args.ylim}
     fig_kw = {'figsize': (4, 6)}
     (fig, ax) = plt.subplots(nrows=2, ncols=1, sharex='col', subplot_kw=subplot_kw, **fig_kw)
     # Plot normalized data and annotations.

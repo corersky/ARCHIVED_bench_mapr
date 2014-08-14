@@ -5,7 +5,6 @@ Plot elapsed times from map-reduce job.
 
 # TODO: use event logger to handle info message
 # TODO: have test module
-# TODO: rename module to main, move utilties to utils
 
 from __future__ import print_function, division
 import os
@@ -18,8 +17,8 @@ def main(args):
     Plot job execution times.
     """
     with open(args.fconfig, 'rb') as fp:
-        pargs = utils.dict_to_class(json.load(fp))
-    utils.plot(pargs)
+        args_fconfig = utils.dict_to_class(json.load(fp))
+    utils.plot(args_fconfig)
     return None
 
 if __name__ == '__main__':
