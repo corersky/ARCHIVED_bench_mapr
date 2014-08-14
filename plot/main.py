@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-"""
-Plot elapsed times from map-reduce job.
+"""Plot elapsed times from map-reduce job.
+
 """
 
 # TODO: use event logger to handle info message
