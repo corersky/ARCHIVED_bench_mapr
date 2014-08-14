@@ -4,7 +4,7 @@ Benchmark Python mapreduce implementations following [A Guide to Python Framewor
 
 ## Current status
 
-As of 20140814T010000Z:
+As of 20140814T030000Z:
 
 Only wordcount and sort have been implemented.
 Only Disco and Hadoop streaming Python examples have been completed.
