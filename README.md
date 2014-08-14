@@ -1,11 +1,16 @@
-disco_benchmark
-===============
+# bench_mapr
 
-Compare performance of Disco with Hadoop as measured by HiBench Hadoop benchmark suite.
+Benchmark Python mapreduce implementations following [A Guide to Python Frameworks]([http://blog.cloudera.com/blog/2013/01/a-guide-to-python-frameworks-for-hadoop/) and [HiBench Hadoop benchmark suite](https://github.com/intel-hadoop/HiBench).
 
-Follow-up to posting on Disco user group:
+# Status as of 20140814T010000Z
+
+Only wordcount and sort have been implemented.
+Only Disco and Hadoop streaming Python examples have been completed.
+
+This repository is follow-up to posting on Disco user group:
 https://groups.google.com/forum/#!topic/disco-dev/u3EsnGgLOPM
 
-Requires disco version 0.4.4
-
-Use http://nvie.com/posts/a-successful-git-branching-model/
+Versions:
+Python: v2.7 from the ContinuumIO Anaconda Python distribution
+Disco: v0.4.4 from the ContinuumIO Anaconda Python distribution
+Hadoop: v2.3.0-cdh5.0.3 from the Cloudera distribution
