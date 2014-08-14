@@ -1,6 +1,6 @@
 # bench_mapr
 
-Benchmark Python mapreduce implementations following [A Guide to Python Frameworks]([http://blog.cloudera.com/blog/2013/01/a-guide-to-python-frameworks-for-hadoop/) and [HiBench Hadoop benchmark suite](https://github.com/intel-hadoop/HiBench).
+Benchmark Python mapreduce implementations following [A Guide to Python Frameworks](http://blog.cloudera.com/blog/2013/01/a-guide-to-python-frameworks-for-hadoop/) and [HiBench Hadoop benchmark suite](https://github.com/intel-hadoop/HiBench).
 
 ## Current status
 
