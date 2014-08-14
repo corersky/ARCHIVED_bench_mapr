@@ -2,7 +2,7 @@
 """Utilities for plotting.
 """
 
-# TODO: have common module for import
+# TODO: have common module for import 
 # TODO: have test module
 
 from __future__ import print_function, division
